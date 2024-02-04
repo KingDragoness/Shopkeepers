@@ -1,0 +1,16 @@
+{
+  "$id": "1",
+  "$type": "SK_3dModel, Assembly-CSharp",
+  "filePath_3dModelPaths": {
+    "$type": "System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib",
+    "$values": [
+      "\\Assets\\Models\\LabCabinet00.obj"
+    ]
+  },
+  "filePath_MaterialPaths": {
+    "$type": "System.Collections.Generic.List`1[[System.String, mscorlib]], mscorlib",
+    "$values": []
+  },
+  "fileName": "LabCabinet",
+  "Extension": ".sk3d"
+}

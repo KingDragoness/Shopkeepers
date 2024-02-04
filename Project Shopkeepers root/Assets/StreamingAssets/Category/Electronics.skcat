@@ -1,0 +1,7 @@
+{
+  "$id": "1",
+  "$type": "Category, Assembly-CSharp",
+  "b_DisplayName": "Electronics",
+  "b_Description": "Electronics for household appliances like dishwashers, TVs and airconditioners.",
+  "Extension": ".skcat"
+}

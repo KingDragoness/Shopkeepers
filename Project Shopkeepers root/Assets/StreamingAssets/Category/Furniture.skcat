@@ -1,0 +1,7 @@
+{
+  "$id": "1",
+  "$type": "Category, Assembly-CSharp",
+  "b_DisplayName": "Furniture",
+  "b_Description": "Furniture is household equipment, usually made of wood, metal, plastics, marble, glass, fabrics, or related materials and having a variety of different purposes.",
+  "Extension": ".skcat"
+}
