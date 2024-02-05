@@ -22,6 +22,7 @@ public class AssetCreatorUI : MonoBehaviour
 
     public AssetCreatorType menuType;
     public AssetCreatorUI_3dModel UI_3dModel;
+    public AssetCreatorUI_Material UI_Material;
 
     public void OpenUI(int type)
     {
@@ -33,12 +34,19 @@ public class AssetCreatorUI : MonoBehaviour
         if (menuType == AssetCreatorType.Model3d)
         {
             UI_3dModel.gameObject.EnableGameobject(true);
-
         }
         else
         {
             UI_3dModel.gameObject.EnableGameobject(false);
+        }
 
+        if (menuType == AssetCreatorType.Material)
+        {
+            UI_Material.gameObject.EnableGameobject(true);
+        }
+        else
+        {
+            UI_Material.gameObject.EnableGameobject(false);
         }
     }
 

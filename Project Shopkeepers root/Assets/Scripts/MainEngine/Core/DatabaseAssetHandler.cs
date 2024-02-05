@@ -48,6 +48,38 @@ public class DatabaseAssetHandler : MonoBehaviour
 
 
     #region SK Asset
+
+    public string ProcessUriPath(string fullPath)
+    {
+        string localPath = fullPath;
+        string streamingPath = Shopkeeper.Path_StreamingAssets;
+        streamingPath = streamingPath.Replace("/", @"\");
+        bool b_PathRemoved = false;
+
+        if (localPath.Contains(streamingPath))
+        {
+            localPath = localPath.Remove(0, streamingPath.Length);
+            b_PathRemoved = true;
+        }
+
+        if (b_PathRemoved == false)
+        {
+            foreach (var gamePath in Shopkeeper.Database.all_LoadPathTarget)
+            {
+                string sz1 = gamePath;
+                sz1 = sz1.Replace("/", @"\");
+
+                if (localPath.Contains(sz1))
+                {
+                    localPath = localPath.Remove(0, sz1.Length);
+                }
+            }
+        }
+
+        return localPath;
+
+    }
+
     /// <summary>
     /// Load the SK asset files.
     /// </summary>

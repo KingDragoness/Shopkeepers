@@ -6,20 +6,47 @@ using Sirenix.OdinInspector;
 using SFB;
 
 
-public abstract class AssetCreatorWindow : MonoBehaviour
+public class AssetCreatorWindow : MonoBehaviour
 {
 
     [FoldoutGroup("Header")] public Text label_headerFileName;
+    [ReadOnly] public GameObject workspace_Parent;
+    public Text text_Console;
+    public Transform parentContent;
 
     public string targetFilePath = "";
 
-    //for stupid button
-    public virtual void Button_NewFile()
+    public string FileExtension = "png";
+
+
+    private void Start()
+    {
+        workspace_Parent = new GameObject();
+    }
+
+    private void OnDisable()
+    {
+        if (workspace_Parent != null) workspace_Parent.gameObject.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        if (workspace_Parent != null) workspace_Parent.gameObject.SetActive(true);
+
+    }
+
+    public void Button_NewFile()
     {
         NewFile();
     }
-    public abstract void Button_SaveFile();
-    public abstract void Button_LoadFile();
+    public void Button_SaveFile()
+    {
+
+    }
+    public void Button_LoadFile()
+    {
+
+    }
 
 
     protected virtual void NewFile()
@@ -30,7 +57,7 @@ public abstract class AssetCreatorWindow : MonoBehaviour
 
     }
 
-    protected virtual void SaveFile<T>(object skAsset) where T : SKAsset
+    public virtual void SaveFile<T>(object skAsset) where T : SKAsset
     {
         T skAsset_derivative = skAsset as T;
         string path = StandaloneFileBrowser.SaveFilePanel("Save File", "", skAsset_derivative.fileName, "sk3d");
@@ -45,13 +72,12 @@ public abstract class AssetCreatorWindow : MonoBehaviour
         RefreshUI();
     }
 
-    protected virtual T LoadFile<T>(string extension) where T : SKAsset
+    public virtual T LoadFile<T>(string extension) where T : SKAsset
     {
         string[] path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extension, false);
 
         try
         {
-            NewFile();
 
             targetFilePath = path[0];
 
@@ -70,7 +96,7 @@ public abstract class AssetCreatorWindow : MonoBehaviour
     }
 
 
-    public virtual void RefreshUI()
+    public void RefreshUI()
     {
         label_headerFileName.text = $"{targetFilePath}";
     }

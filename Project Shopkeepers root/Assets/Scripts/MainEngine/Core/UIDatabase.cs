@@ -12,10 +12,14 @@ using System.IO;
 public class UIDatabase : MonoBehaviour
 {
 
+    [SerializeField] private WindowConfirmPrompt window_ConfirmPrompt;
+
     public SKUI_FilepathField prefab_FileLocationField;
     public SKUI_InputField prefab_TextInputField;
     public ModularWindow prefab_ModularWindow;
     public GameObject assetCreatorUI;
+
+    public WindowConfirmPrompt ConfirmPrompt { get => window_ConfirmPrompt;  }
 
     private void Start()
     {
