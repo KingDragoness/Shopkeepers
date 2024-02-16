@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 public class AssetCreator : MonoBehaviour
 {
 
+    public GameObject assetCreatorScene;
+
     #region Developer Mode
     [InfoBox("Always at /StreamingAssets/Category")]
     public Category category;
@@ -22,6 +24,21 @@ public class AssetCreator : MonoBehaviour
     }
 
     #endregion
+
+    private void Start()
+    {
+        DisableAssetCreator();
+    }
+
+    public void EnableAssetCreator()
+    {
+        assetCreatorScene.EnableGameobject(true);
+    }
+
+    public void DisableAssetCreator()
+    {
+        assetCreatorScene.EnableGameobject(false);
+    }
 
     public string ConvertSKAssetToJSON<T>(object value) where T : SKAsset
     {

@@ -17,7 +17,7 @@ public class SaveGameData
 
     public string str_PlayerName = "Immortality";
     public string str_CompanyName = "Pukimart";
-    public float f_Money = 20000;
+    public long long_Money = 20000;
     public int unixTime = 12592030;
     public string str_MainCategory = "Furniture";
 

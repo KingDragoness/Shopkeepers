@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 326b64d1f9dc87d42b9b8295c153875a, type: 3}
+  m_Name: Career
+  m_EditorClassIdentifier: 
+  gamemodeName: Career
+  description: Career mode for player.
+  start_Year: 2020
+  start_Month: 1
+  start_Day: 5
+  minimumWorkStart: 6.5
+  maximumWorkStart: 20
+  startingMoney: 55000
+  timescaleSpeed: 40

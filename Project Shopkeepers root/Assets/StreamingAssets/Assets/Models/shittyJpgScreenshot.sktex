@@ -1,0 +1,7 @@
+{
+  "$id": "1",
+  "$type": "SK_Texture, Assembly-CSharp",
+  "filePath_MainTexture": "\\Assets\\Models\\textureTestJPG.jpg",
+  "fileName": "shittyJpgScreenshot",
+  "Extension": ".sktex"
+}

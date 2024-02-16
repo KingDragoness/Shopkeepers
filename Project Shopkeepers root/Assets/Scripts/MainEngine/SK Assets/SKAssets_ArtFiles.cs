@@ -37,9 +37,9 @@ public class SK_Material: SKAsset
 {
 
     //for now it's simple
-    public string filePath_MainTexture = "/IKEA Furniture Packs/Chairs/Poang/Texture_PoangArmchair.png";
-    public string filePath_Normalmap = "/IKEA Furniture Packs/Chairs/Poang/Texture_PoangArmchair_Normalmap.png";
-
+    public string filePath_MainTexture = ""; ///IKEA Furniture Packs/Chairs/Poang/Texture_PoangArmchair.png
+    public string filePath_Normalmap = ""; ///IKEA Furniture Packs/Chairs/Poang/Texture_PoangArmchair_Normalmap.png
+    public Vector3Int AlbedoColor = new Vector3Int(255,255,255); //white 0-255, 8-bit
 
 
     public override string Extension

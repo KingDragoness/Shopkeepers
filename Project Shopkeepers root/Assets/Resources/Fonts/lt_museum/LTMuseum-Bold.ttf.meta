@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 1322664c700a35e43a8ac4f0c2657f48
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: LT Museum
+  fontNames:
+  - LT Museum
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 912c851b854f38048a4ad7f66278317d, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

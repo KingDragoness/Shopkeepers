@@ -21,7 +21,7 @@ TrueTypeFontImporter:
   - {fileID: 12800000, guid: 33ad080aeebdc2e4fa1936fdcd848f19, type: 3}
   - {fileID: 12800000, guid: a25f986f7fab39a4ca28a5d426c6747b, type: 3}
   customCharacters: 
-  fontRenderingMode: 0
+  fontRenderingMode: 1
   ascentCalculationMode: 1
   useLegacyBoundsCalculation: 0
   shouldRoundAdvanceValue: 1

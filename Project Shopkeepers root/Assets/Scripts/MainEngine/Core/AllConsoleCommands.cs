@@ -20,6 +20,6 @@ public class CC_OpenAssetCreator : CC_Base
 
     public override void ExecuteCommand(string[] args)
     {
-        Shopkeeper.UI.assetCreatorUI.gameObject.SetActive(true);
+        Shopkeeper.UI.assetCreatorUI.gameObject.EnableGameobject(!Shopkeeper.UI.assetCreatorUI.activeSelf);
     }
 }

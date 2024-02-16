@@ -11,98 +11,117 @@ using UnityEngine.Networking;
 using ButtonCommandElement = WindowConfirmPrompt.ButtonCommandElement;
 
 
-public class AssetCreatorUI_3dModel : MonoBehaviour
+public class AssetCreatorUI_3dModel : AssetCreatorWindow
 {
-
-    public AssetCreatorWindow baseAssetWindow;
 
     public List<GameObject> allLoadedModels = new List<GameObject>();
     public SK_3dModel skAsset_3d;
     [ReadOnly] public SKUI_FilepathField inputfield_3dModelPath;
     [ReadOnly] public SKUI_InputField inputfield_3dModelName;
 
-    private bool hasInitialized = false;
 
     private void Awake()
     {
         InitiateUI();
-        hasInitialized = true;
     }
 
-    private void Start()
+    public override void Start()
     {
-        baseAssetWindow.workspace_Parent.name = $"{this.GetType().ToString()}";
+        base.Start();
+        workspace_Parent.name = $"{this.GetType().ToString()}";
     }
 
-
-    protected void NewFile()
+    #region Parent Overrides
+    public override void OnEnable()
     {
-        List<ButtonCommandElement> allButtonElements = new List<ButtonCommandElement>();
-        ButtonCommandElement e1 = new ButtonCommandElement(NewFile_PromptConfirm, null, "New file");
-        allButtonElements.Add(e1);
-        Shopkeeper.UI.ConfirmPrompt.InitiatePrompt("New File", "Unsaved file will be lost. Confirm new file?", allButtonElements);
+        base.OnEnable();
+        Shopkeeper.AssetCreator.EnableAssetCreator();
     }
 
-    private void NewFile_PromptConfirm(string[] args)
+    public override void OnDisable()
     {
-        skAsset_3d = new SK_3dModel();
-        inputfield_3dModelName.inputfield.text = "";
-        Refresh3dModels();
-        RefreshUI();
-        Shopkeeper.UI.ConfirmPrompt.gameObject.SetActive(false);
+        base.OnDisable();
+        Shopkeeper.AssetCreator.DisableAssetCreator();
     }
 
-
-    public void Button_SaveFile()
+    public override void Button_SaveFile()
     {
-        baseAssetWindow.SaveFile<SK_3dModel>(skAsset_3d);
+        SaveFile<SK_3dModel>(skAsset_3d);
         Refresh3dModels();
 
     }
 
-    public void Button_LoadFile()
+    public override void Button_LoadFile()
     {
-        skAsset_3d = baseAssetWindow.LoadFile<SK_3dModel>(baseAssetWindow.FileExtension);
+        var newSKAsset = LoadFile<SK_3dModel>(FileExtension);
+        if (newSKAsset == null) return;
+        skAsset_3d = newSKAsset;
         inputfield_3dModelName.inputfield.text = skAsset_3d.fileName;
         Refresh3dModels();
         RefreshUI();
     }
 
-
-    public void OnEnable()
+    public override void NewFile_PromptConfirm(string[] args)
     {
-        if (hasInitialized == false) return;
-
-        RefreshUI();
-        
+        skAsset_3d = new SK_3dModel();
+        inputfield_3dModelName.inputfield.text = "";
+        base.NewFile_PromptConfirm(args);
+        Refresh3dModels();
     }
+
+    public override void RefreshUI()
+    {
+        skAsset_3d.fileName = inputfield_3dModelName.inputfield.text;
+
+        base.RefreshUI();
+        string s = "";
+
+        s += $"{skAsset_3d.fileName}{skAsset_3d.Extension}\n";
+        {
+            string allPaths = "";
+
+            foreach (var path in skAsset_3d.filePath_3dModelPaths)
+            {
+                allPaths += $"> .obj filepath: {path}\n";
+            }
+
+            s += allPaths;
+        }
+
+
+        text_Console.text = s;
+    }
+
+    #endregion
+
+
 
     public void InitiateUI()
     {
-        baseAssetWindow.text_Console.text = "";
+        text_Console.text = "";
 
-        inputfield_3dModelPath = Shopkeeper.UI.DrawFileLocationField(baseAssetWindow.parentContent, "Add 3d model: ", placeholderText: "Select file location...");
+        inputfield_3dModelPath = Shopkeeper.UI.DrawFileLocationField(parentContent, "Add 3d model: ", placeholderText: "Select file location...");
         inputfield_3dModelPath.button.onClick.AddListener(ClickOpen_FieldLocation);
 
-        inputfield_3dModelName = Shopkeeper.UI.DrawTextInputField(baseAssetWindow.parentContent, "File name: ", placeholderText: "Enter name...");
+        inputfield_3dModelName = Shopkeeper.UI.DrawTextInputField(parentContent, "File name: ", placeholderText: "Enter name...");
         inputfield_3dModelName.inputfield.onEndEdit.AddListener(OnEndEdit_InputField);
 
+        Shopkeeper.UI.DrawButtonField(parentContent, "COME ON", 48f);
     }
 
     public void OnEndEdit_InputField(string s)
     {
-        skAsset_3d.fileName = s;
         RefreshUI();
     }
 
     //special for location field:
     public void ClickOpen_FieldLocation()
     {
-        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", baseAssetWindow.FileExtension, false);
+        string[] paths = StandaloneFileBrowser.OpenFilePanel("Open File", "", "obj", false);
         if (paths.Length > 0)
         {
             var uri = new System.Uri(paths[0]);
-            Shopkeeper.Database.ProcessUriPath(uri.LocalPath);
+            skAsset_3d.filePath_3dModelPaths.Add(Shopkeeper.Database.ProcessUriPath(uri.LocalPath));
             RefreshUI();
             Refresh3dModels();
         }
@@ -128,29 +147,10 @@ public class AssetCreatorUI_3dModel : MonoBehaviour
             if (modelObj != null)
             {
                 allLoadedModels.Add(modelObj);
-                modelObj.transform.SetParent(baseAssetWindow.workspace_Parent.transform);
+                modelObj.transform.SetParent(workspace_Parent.transform);
             }
         }
     }
 
-    public void RefreshUI()
-    {
-        string s = "";
-
-        s += $"{skAsset_3d.fileName}{skAsset_3d.Extension}\n";
-        {
-            string allPaths = "";
-
-            foreach(var path in skAsset_3d.filePath_3dModelPaths)
-            {
-                allPaths += $"> .obj filepath: {path}\n";
-            }
-
-            s += allPaths;
-        }
-
-
-        baseAssetWindow.text_Console.text = s;
-    }
 
 }

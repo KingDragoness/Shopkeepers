@@ -1,0 +1,8 @@
+{
+  "$id": "1",
+  "$type": "SK_Material, Assembly-CSharp",
+  "filePath_MainTexture": "\\Assets\\Models\\textureTesting1.png",
+  "filePath_Normalmap": "/IKEA Furniture Packs/Chairs/Poang/Texture_PoangArmchair_Normalmap.png",
+  "fileName": "mat_UIAccounting",
+  "Extension": ".skmat"
+}

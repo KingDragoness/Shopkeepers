@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Sirenix.OdinInspector;
 using Newtonsoft.Json;
 using UnityEngine;
 using Dummiesman;
@@ -22,6 +23,81 @@ public class DatabaseAssetHandler : MonoBehaviour
 {
 
     public List<string> all_LoadPathTarget = new List<string>();
+    public bool DEBUG_loadAllAssetMeta = false;
+    [Space]
+    //loaded database
+    public List<SK_3dModel> loaded_3dModelAsset = new List<SK_3dModel>();
+    public List<SK_Material> loaded_TextureAsset = new List<SK_Material>();
+
+
+    private void Awake()
+    {
+        if (DEBUG_loadAllAssetMeta == true)
+        {
+            LoadAllAssets();
+        }
+    }
+
+    [FoldoutGroup("DEBUG")]
+    [Button("DEBUG_LoadAllAssets")]
+    public void LoadAllAssets()
+    {
+        loaded_3dModelAsset.Clear();
+        loaded_TextureAsset.Clear();
+        Resources.UnloadUnusedAssets();
+        List<DirectoryInfo> allDirectoryInfos = new List<DirectoryInfo>();
+
+        {
+            DirectoryInfo d = new DirectoryInfo($"{Shopkeeper.Path_StreamingAssets}");
+            Debug.Log(d.FullName);
+            allDirectoryInfos.Add(d);
+        }
+
+        foreach(var dir in allDirectoryInfos)
+        {
+            //find sk3d
+            {
+                FileInfo[] Files = dir.GetFiles("*.sk3d", SearchOption.AllDirectories);
+
+                foreach (FileInfo file in Files)
+                {
+                    try 
+                    {
+                        var skAsset = LoadAssetFile<SK_3dModel>(file.FullName, "");
+                        //Debug.Log($"Loading asset: {file.Name}");
+                        loaded_3dModelAsset.Add(skAsset);
+
+                    }
+                    catch
+                    {
+                        Debug.LogError($"ERROR! Failed loading asset: {file.Name}");
+
+                    }
+                }
+            }
+
+            //find skmat
+            {
+                FileInfo[] Files = dir.GetFiles("*.skmat", SearchOption.AllDirectories);
+
+                foreach (FileInfo file in Files)
+                {
+                    try
+                    {
+                        var skAsset = LoadAssetFile<SK_Material>(file.FullName, "");
+                        //Debug.Log($"Loading asset: {file.Name}");
+                        loaded_TextureAsset.Add(skAsset);
+
+                    }
+                    catch
+                    {
+                        Debug.LogError($"ERROR! Failed loading asset: {file.Name}");
+
+                    }
+                }
+            }
+        }
+    }
 
     #region Loading Asset
     public GameObject Load3dModel(string url)
@@ -43,6 +119,22 @@ public class DatabaseAssetHandler : MonoBehaviour
         }
 
         return result3dModel;
+    }
+
+    public Texture2D LoadTexture(string filePath)
+    {
+
+        Texture2D tex = null;
+        byte[] fileData;
+
+        if (File.Exists(filePath))
+        {
+            fileData = File.ReadAllBytes(filePath);
+            tex = new Texture2D(2, 2);
+            tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+        }
+
+        return tex;
     }
     #endregion
 
@@ -84,7 +176,7 @@ public class DatabaseAssetHandler : MonoBehaviour
     /// Load the SK asset files.
     /// </summary>
     /// <param name="path">Full path including C: drives.</param>
-    /// <param name="extension">Extension file (.sk3d, .skmat)</param>
+    /// <param name="extension">Better not to fill this. Extension file (.sk3d, .skmat)</param>
     /// <returns></returns>
     public T LoadAssetFile<T>(string path = "", string extension = "") where T : SKAsset
     {

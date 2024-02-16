@@ -19,7 +19,7 @@ public class Shopkeeper : MonoBehaviour
     [SerializeField] private ShopkeeperGame _game;
     [SerializeField] private DatabaseAssetHandler _database;
     [SerializeField] private AssetCreator _assetCreator;
-    [SerializeField] private UIDatabase _UIDatabase;
+    [SerializeField] private MainUI _UIDatabase;
     [SerializeField] private ConsoleCommands _consoleCommand;
 
     public static ShopkeeperGame Game
@@ -45,7 +45,7 @@ public class Shopkeeper : MonoBehaviour
         }
     }
 
-    public static UIDatabase UI
+    public static MainUI UI
     {
         get
         {
