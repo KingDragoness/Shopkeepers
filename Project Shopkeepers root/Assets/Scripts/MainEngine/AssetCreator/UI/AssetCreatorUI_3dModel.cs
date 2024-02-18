@@ -35,13 +35,11 @@ public class AssetCreatorUI_3dModel : AssetCreatorWindow
     public override void OnEnable()
     {
         base.OnEnable();
-        Shopkeeper.AssetCreator.EnableAssetCreator();
     }
 
     public override void OnDisable()
     {
         base.OnDisable();
-        Shopkeeper.AssetCreator.DisableAssetCreator();
     }
 
     public override void Button_SaveFile()

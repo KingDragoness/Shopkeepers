@@ -49,13 +49,11 @@ public class AssetCreatorUI_Material : AssetCreatorWindow
     public override void OnEnable()
     {
         base.OnEnable();
-        Shopkeeper.AssetCreator.EnableAssetCreator();
     }
 
     public override void OnDisable()
     {
         base.OnDisable();
-        Shopkeeper.AssetCreator.DisableAssetCreator();
     }
 
     public override void Button_SaveFile()

@@ -20,13 +20,39 @@ public class Shopkeeper : MonoBehaviour
     [SerializeField] private DatabaseAssetHandler _database;
     [SerializeField] private AssetCreator _assetCreator;
     [SerializeField] private MainUI _UIDatabase;
+    [SerializeField] private Lot _lot;
+    [SerializeField] private BuildMode _buildMode;
     [SerializeField] private ConsoleCommands _consoleCommand;
+    [SerializeField] private InternalGameAssetDatabase _internalAsset;
 
     public static ShopkeeperGame Game
     {
         get
         {
             return Instance._game;
+        }
+    }
+
+    public static InternalGameAssetDatabase InternalAsset
+    {
+        get
+        {
+            return Instance._internalAsset;
+        }
+    }
+
+    public static Lot Lot
+    {
+        get
+        {
+            return Instance._lot;
+        }
+    }
+    public static BuildMode BuildMode
+    {
+        get
+        {
+            return Instance._buildMode;
         }
     }
 

@@ -32,32 +32,32 @@ public class ShopGameUI : MonoBehaviour
     [FoldoutGroup("Primary Tab")] public PrimaryUITab UI_Finance;
     [FoldoutGroup("Primary Tab")] public PrimaryUITab UI_Realestate;
     [FoldoutGroup("Primary Tab")] public PrimaryUITab UI_Buildmode;
-    [FoldoutGroup("Primary Tab")] public Sprite Icon_Perk;
-    [FoldoutGroup("Primary Tab")] public Sprite Icon_Management;
-    [FoldoutGroup("Primary Tab")] public Sprite Icon_Inventory;
-    [FoldoutGroup("Primary Tab")] public Sprite Icon_Finance;
-    [FoldoutGroup("Primary Tab")] public Sprite Icon_Realestate;
-    [FoldoutGroup("Primary Tab")] public Sprite Icon_Buildmode;
+
 
 
     private void Awake()
     {
         UI_Perks.label_header.text = "Perks";
-        UI_Perks.image_icon.sprite = Icon_Perk;
+        UI_Perks.image_icon.sprite = Shopkeeper.InternalAsset.Icon_Perk;
         UI_Management.label_header.text = "Management";
-        UI_Management.image_icon.sprite = Icon_Management;
+        UI_Management.image_icon.sprite = Shopkeeper.InternalAsset.Icon_Management;
         UI_Inventory.label_header.text = "Inventory";
-        UI_Inventory.image_icon.sprite = Icon_Inventory;
+        UI_Inventory.image_icon.sprite = Shopkeeper.InternalAsset.Icon_Inventory;
         UI_Finance.label_header.text = "Finance";
-        UI_Finance.image_icon.sprite = Icon_Finance;
+        UI_Finance.image_icon.sprite = Shopkeeper.InternalAsset.Icon_Finance;
         UI_Realestate.label_header.text = "Real Estate";
-        UI_Realestate.image_icon.sprite = Icon_Realestate;
+        UI_Realestate.image_icon.sprite = Shopkeeper.InternalAsset.Icon_Realestate;
         UI_Buildmode.label_header.text = "Build/Furnish Mode";
-        UI_Buildmode.image_icon.sprite = Icon_Buildmode;
+        UI_Buildmode.image_icon.sprite = Shopkeeper.InternalAsset.Icon_Buildmode;
     }
 
     public void OpenUI(int type)
     {
+        if (currentUI == (GameUIType)type)
+        {
+            type = 0;
+        }
+
         currentUI = (GameUIType)type;
     }
 

@@ -46,6 +46,7 @@ public class MouseLook : MonoBehaviour {
     void Start()
     {
 
+
         // Make the rigid body not change rotation
         if (GetComponent<Rigidbody>())
             GetComponent<Rigidbody>().freezeRotation = true;
@@ -58,7 +59,6 @@ public class MouseLook : MonoBehaviour {
 
     void Update ()
 	{
-        if (Input.GetKey(KeyCode.F)) return;
 
         if (disableInput == false) ExecuteFunction();
         if (useDamping)

@@ -25,8 +25,37 @@ public class AssetCreatorUI : MonoBehaviour
     public AssetCreatorUI_Material UI_Material;
     public AssetCreatorUI_Texture UI_Texture;
 
+    public static void Enable()
+    {
+        Shopkeeper.UI.assetCreatorUI.gameObject.SetActive(true);
+        Shopkeeper.Game.scene.gameObject.SetActive(false);
+        Shopkeeper.AssetCreator.EnableAssetCreator();
+    }
+
+    public static void Disable()
+    {
+        Shopkeeper.UI.assetCreatorUI.gameObject.SetActive(false);
+        Shopkeeper.Game.scene.gameObject.SetActive(true);
+        Shopkeeper.AssetCreator.DisableAssetCreator();
+    }
+
+    public static void Toggle()
+    {
+        if (Shopkeeper.UI.assetCreatorUI.activeSelf)
+        {
+            Disable();
+        }
+        else
+        {
+            Enable();
+        }
+
+    }
+
     public void OpenUI(int type)
     {
+  
+
         menuType = (AssetCreatorType)type;
     }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.IO;
 using Sirenix.OdinInspector;
 
@@ -15,7 +16,7 @@ public class MainUI : MonoBehaviour
 
     [SerializeField] private WindowConfirmPrompt window_ConfirmPrompt;
     public ModularWindow prefab_ModularWindow;
-    [SerializeField] private TooltipHighlight _tooltipHighlight;
+    [SerializeField] private Tooltip _tooltipHighlight;
     [SerializeField] private ContextCommand _contextTooltip;
     public Vector2 inGame_borderMin = new Vector2(0, 62); //from left,bottom
     public Vector2 inGame_borderMax = new Vector2(0, 26); //to right,up
@@ -39,7 +40,7 @@ public class MainUI : MonoBehaviour
     }
 
     public WindowConfirmPrompt ConfirmPrompt { get => window_ConfirmPrompt; }
-    public TooltipHighlight Tooltip { get => _tooltipHighlight; }
+    public Tooltip Tooltip { get => _tooltipHighlight; }
     public ContextCommand ContextCommand { get => _contextTooltip; }
 
 
@@ -146,5 +147,12 @@ public class MainUI : MonoBehaviour
         _inputfield.transform.localScale = Vector3.one;
         return _inputfield;
     }
-
+    public static List<RaycastResult> GetEventSystemRaycastResults()
+    {
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+        List<RaycastResult> raysastResults = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, raysastResults);
+        return raysastResults;
+    }
 }

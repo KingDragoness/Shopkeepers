@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
 using Sirenix.OdinInspector;
 
 
@@ -105,7 +104,7 @@ public class ContextCommand : MonoBehaviour
 
     private void HandleCloseContextCommand()
     {
-        var rr = GetEventSystemRaycastResults();
+        var rr = MainUI.GetEventSystemRaycastResults();
 
         foreach (var result in rr)
         {
@@ -135,13 +134,6 @@ public class ContextCommand : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    static List<RaycastResult> GetEventSystemRaycastResults()
-    {
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = Input.mousePosition;
-        List<RaycastResult> raysastResults = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, raysastResults);
-        return raysastResults;
-    }
+
 
 }

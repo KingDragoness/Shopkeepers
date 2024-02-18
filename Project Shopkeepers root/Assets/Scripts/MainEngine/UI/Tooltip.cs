@@ -3,22 +3,29 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class TooltipHighlight : MonoBehaviour
+public class Tooltip : MonoBehaviour
 {
 
     public Text label_Tooltip;
     public RectTransform rectTransform;
     public Vector2 offset = new Vector2(2f,6f);
 
-    public void ShowTooltip(string content = "")
+
+    public static void ShowTooltip(string content = "")
+    {
+        Shopkeeper.UI.Tooltip.ShowTooltip_1(content);
+    }
+
+
+    private void ShowTooltip_1(string content = "")
     {
         gameObject.SetActive(true);
         label_Tooltip.text = content;
     }
 
-    public void HideTooltip()
+    public static void HideTooltip()
     {
-        gameObject.SetActive(false);
+        Shopkeeper.UI.Tooltip.gameObject.SetActive(false);
     }
 
     private void Update()

@@ -13,11 +13,11 @@ public class ModularUI_TooltipHighlightable : MonoBehaviour, IPointerEnterHandle
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Shopkeeper.UI.Tooltip.ShowTooltip(content);
+        Tooltip.ShowTooltip(content);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Shopkeeper.UI.Tooltip.HideTooltip();
+        Tooltip.HideTooltip();
     }
 }

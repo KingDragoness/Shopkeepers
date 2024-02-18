@@ -26,7 +26,7 @@ public class RightClickable_ContextCommand : MonoBehaviour, IPointerClickHandler
     {
         if (eventData.button == PointerEventData.InputButton.Right)
         {
-            Shopkeeper.UI.ContextCommand.ShowTooltip_1(commands);
+            ContextCommand.ShowTooltip(commands);
         }
     }
 

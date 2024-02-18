@@ -36,6 +36,88 @@ public static class ShopkeeperUtilities
 
         return false;
     }
+
+    public static void DestroyAndClearList<T>(this List<T> list) where T : Component
+    {
+        foreach (var wall in list)
+        {
+            if (wall == null) continue;
+            UnityEngine.Object.Destroy(wall.gameObject);
+        }
+
+        list.Clear();
+    }
+
+    /// <summary>
+    /// Every wall dots must know its connections
+    /// </summary>
+    public static void ShareWallConnections(this List<BuildData.WallDot> _wallDots)
+    {
+        //Assume dot A, B
+        foreach(var walldot_0 in _wallDots)
+        {
+            foreach (var walldot in _wallDots)
+            {
+                //dot B has connections to dot A then add it
+                if (walldot_0.connectedDots.Exists(x => x == walldot.pos))
+                {
+                    if (walldot.connectedDots.Exists(x => x == walldot_0.pos) == false) walldot.connectedDots.Add(walldot_0.pos);
+                }
+            }
+        }
+
+    }
+
+    public static void DestroyAndClearList_1(this List<GameObject> list)
+    {
+        foreach (var wall in list)
+        {
+            if (wall == null) continue;
+            UnityEngine.Object.Destroy(wall.gameObject);
+        }
+
+        list.Clear();
+    }
+
+
+    /// <summary>
+    /// Check if direction is only either Left, Right, Down, Up, Forward or Back.
+    /// </summary>
+    /// <param name="v3"></param>
+    /// <returns></returns>
+    public static bool OnlySingleDirection(this Vector3 v3)
+    {
+        if (Mathf.Abs(v3.x) > 0.1f)
+        {
+            if (Mathf.Abs(v3.y) <= float.Epsilon && Mathf.Abs(v3.z) <= float.Epsilon)
+            {
+                return true;
+            }
+        }
+        if (Mathf.Abs(v3.y) > 0.1f)
+        {
+            if (Mathf.Abs(v3.x) <= float.Epsilon && Mathf.Abs(v3.z) <= float.Epsilon)
+            {
+                return true;
+            }
+        }
+        if (Mathf.Abs(v3.z) > 0.1f)
+        {
+            if (Mathf.Abs(v3.x) <= float.Epsilon && Mathf.Abs(v3.y) <= float.Epsilon)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static T Clone<T>(this T source)
+    {
+        var serialized = JsonConvert.SerializeObject(source, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore });
+        return JsonConvert.DeserializeObject<T>(serialized);
+    }
+
     public static bool Contains(this LayerMask mask, int layer)
     {
         return mask == (mask | (1 << layer));

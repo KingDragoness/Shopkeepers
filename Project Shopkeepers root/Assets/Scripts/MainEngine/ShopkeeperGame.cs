@@ -15,12 +15,15 @@ public class ShopkeeperGame : MonoBehaviour
         Fastest //x4
     }
 
+    public int currentLevel = 0;
     public long money = 1552820;
     public int unixTime = 1708063371;
     public float timescaleIngame = 20f;
     public GamemodeSO Gamemode;
-    public SaveGameData savedata;
+    public SaveGameData currentSaveData;
+    public GameObject scene;
     public SpeedType speedType;
+    public bool DEBUG_ALLOW_DEBUG_GUI = true;
 
     private float deltaUnixTAdded = 0f;
 
@@ -45,6 +48,7 @@ public class ShopkeeperGame : MonoBehaviour
         DateTime dateTime = new DateTime(Gamemode.start_Year, Gamemode.start_Month, Gamemode.start_Day, 8, 0, 0, 0, DateTimeKind.Local);
         money = Gamemode.startingMoney;
         unixTime = (int)dateTime.ConvertToUnixTimestamp();
+        Shopkeeper.Lot.InitializeLotData();
 
     }
 
