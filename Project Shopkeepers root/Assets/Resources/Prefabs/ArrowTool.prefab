@@ -149,6 +149,9 @@ MonoBehaviour:
   color_ArrowUsed: {r: 0.056737285, g: 0.7075472, b: 0.11035011, a: 1}
   color_ArrowIdle: {r: 0.5764706, g: 0.75686276, b: 0.8117647, a: 1}
   maxDistance: 45
+  layerMask_ray:
+    serializedVersion: 2
+    m_Bits: 1
 --- !u!1 &4072348895273025490
 GameObject:
   m_ObjectHideFlags: 0

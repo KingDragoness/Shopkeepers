@@ -16,7 +16,9 @@ using UnityEngine.Networking;
 /// ".skitem" = Shopkeeper's item file
 /// ".skcat" = Shopkeeper's category file
 /// ".sktex" = Shopkeeper's texture file
+/// ".skwallpaper" = Shopkeeper's wallpaper file
 /// </summary>
+
 
 
 public class DatabaseAssetHandler : MonoBehaviour
@@ -24,10 +26,13 @@ public class DatabaseAssetHandler : MonoBehaviour
 
     public List<string> all_LoadPathTarget = new List<string>();
     public bool DEBUG_loadAllAssetMeta = false;
+    public Shader defaultShader;
     [Space]
     //loaded database
+    [Header("Loaded Assets")]
     public List<SK_3dModel> loaded_3dModelAsset = new List<SK_3dModel>();
-    public List<SK_Material> loaded_TextureAsset = new List<SK_Material>();
+    public List<SK_Material> loaded_MaterialsAsset = new List<SK_Material>();
+    public List<SK_Texture> loaded_TextureAsset = new List<SK_Texture>();
 
 
     private void Awake()
@@ -38,22 +43,27 @@ public class DatabaseAssetHandler : MonoBehaviour
         }
     }
 
+    public List<DirectoryInfo> GetAllAssetPaths()
+    {
+        List<DirectoryInfo> allDirectoryInfos = new List<DirectoryInfo>();
+        DirectoryInfo d = new DirectoryInfo($"{Shopkeeper.Path_StreamingAssets}");
+        allDirectoryInfos.Add(d);
+
+
+        return allDirectoryInfos;
+    }
+
     [FoldoutGroup("DEBUG")]
     [Button("DEBUG_LoadAllAssets")]
     public void LoadAllAssets()
     {
         loaded_3dModelAsset.Clear();
+        loaded_MaterialsAsset.Clear();
         loaded_TextureAsset.Clear();
         Resources.UnloadUnusedAssets();
-        List<DirectoryInfo> allDirectoryInfos = new List<DirectoryInfo>();
+        List<DirectoryInfo> allDirectoryInfos = GetAllAssetPaths();
 
-        {
-            DirectoryInfo d = new DirectoryInfo($"{Shopkeeper.Path_StreamingAssets}");
-            Debug.Log(d.FullName);
-            allDirectoryInfos.Add(d);
-        }
-
-        foreach(var dir in allDirectoryInfos)
+        foreach (var dir in allDirectoryInfos)
         {
             //find sk3d
             {
@@ -64,7 +74,6 @@ public class DatabaseAssetHandler : MonoBehaviour
                     try 
                     {
                         var skAsset = LoadAssetFile<SK_3dModel>(file.FullName, "");
-                        //Debug.Log($"Loading asset: {file.Name}");
                         loaded_3dModelAsset.Add(skAsset);
 
                     }
@@ -85,7 +94,25 @@ public class DatabaseAssetHandler : MonoBehaviour
                     try
                     {
                         var skAsset = LoadAssetFile<SK_Material>(file.FullName, "");
-                        //Debug.Log($"Loading asset: {file.Name}");
+                        loaded_MaterialsAsset.Add(skAsset);
+
+                    }
+                    catch
+                    {
+                        Debug.LogError($"ERROR! Failed loading asset: {file.Name}");
+
+                    }
+                }
+            }
+
+            {
+                FileInfo[] Files = dir.GetFiles("*.sktex", SearchOption.AllDirectories);
+
+                foreach (FileInfo file in Files)
+                {
+                    try
+                    {
+                        var skAsset = LoadAssetFile<SK_Texture>(file.FullName, "");
                         loaded_TextureAsset.Add(skAsset);
 
                     }
@@ -100,6 +127,52 @@ public class DatabaseAssetHandler : MonoBehaviour
     }
 
     #region Loading Asset
+    public GameObject Load_SK3dmodel(SK_3dModel sk_model)
+    {
+        if (sk_model.loadedAsset != null) return sk_model.loadedAsset;
+
+        var allDirectoryInfos = GetAllAssetPaths();
+
+        foreach (var directory in allDirectoryInfos)
+        {
+            foreach (var path in sk_model.filePath_3dModelPaths)
+            {
+                string pathURL = directory + path;
+                sk_model.loadedAsset = Load3dModel(pathURL);
+                return sk_model.loadedAsset;
+            }
+        }
+
+        return null;
+    }
+
+    public Texture2D Load_SKTexture(SK_Texture sk_texture)
+    {
+        if (sk_texture.loadedAsset != null) return sk_texture.loadedAsset;
+
+        var allDirectoryInfos = GetAllAssetPaths();
+
+        foreach (var directory in allDirectoryInfos)
+        {
+            string pathURL = directory + sk_texture.filePath_MainTexture;
+            sk_texture.loadedAsset = LoadTexture(pathURL);
+            return sk_texture.loadedAsset;
+        }
+
+        return null;
+    }
+
+    public Material Load_Material(SK_Texture sk_texture)
+    {
+        if (sk_texture.generatedMaterial != null) return sk_texture.generatedMaterial;
+
+        Texture2D texture2d = Load_SKTexture(sk_texture);
+        sk_texture.generatedMaterial = new Material(defaultShader);
+        sk_texture.generatedMaterial.SetTexture("_MainTex", texture2d);
+
+        return sk_texture.generatedMaterial;
+    }
+
     public GameObject Load3dModel(string url)
     {
         GameObject result3dModel = null;
@@ -205,6 +278,11 @@ public class DatabaseAssetHandler : MonoBehaviour
 
         return assetFile;
 
+    }
+
+    public SK_Texture Get_SKTexture(string path)
+    {
+        return loaded_TextureAsset.Find(x => x.filePath_MainTexture == path);
     }
 
 

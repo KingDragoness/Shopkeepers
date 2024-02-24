@@ -10,22 +10,34 @@ public class Tooltip : MonoBehaviour
     public RectTransform rectTransform;
     public Vector2 offset = new Vector2(2f,6f);
 
+    private ModularUI_TooltipHighlightable previousHighlightTooltip;
 
-    public static void ShowTooltip(string content = "")
+
+    public static void ShowTooltip(string content = "", ModularUI_TooltipHighlightable highlightScript = null)
     {
-        Shopkeeper.UI.Tooltip.ShowTooltip_1(content);
+        Shopkeeper.UI.Tooltip.ShowTooltip_1(content, highlightScript);
     }
 
 
-    private void ShowTooltip_1(string content = "")
+    private void ShowTooltip_1(string content = "", ModularUI_TooltipHighlightable highlightScript = null)
     {
         gameObject.SetActive(true);
+        previousHighlightTooltip = highlightScript;
         label_Tooltip.text = content;
     }
 
     public static void HideTooltip()
     {
         Shopkeeper.UI.Tooltip.gameObject.SetActive(false);
+    }
+
+    public static void TryDisable(ModularUI_TooltipHighlightable highlightScript)
+    {
+        if (Shopkeeper.UI.Tooltip.previousHighlightTooltip == highlightScript)
+        {
+            HideTooltip();
+            Shopkeeper.UI.Tooltip.previousHighlightTooltip = null;
+        }
     }
 
     private void Update()

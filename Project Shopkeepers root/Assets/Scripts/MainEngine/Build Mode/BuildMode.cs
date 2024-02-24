@@ -26,14 +26,25 @@ public class BuildMode : MonoBehaviour
     [SerializeField] private BuildMode_ArrowIcon prefab_Arrow;
     [SerializeField] private BuildMode_ArrowIcon currentArrow;
     [SerializeField] private BuildMode_Wall _wall;
+    [SerializeField] private BuildMode_Wallpaper _wallpaper;
 
     public static BuildMode_Wall Wall
     {
         get { return Shopkeeper.BuildMode._wall; }
     }
+    public static BuildMode_Wallpaper Wallpaper
+    {
+        get { return Shopkeeper.BuildMode._wallpaper; }
+    }
 
     public static BuildToolType CurrentTool { get => Shopkeeper.BuildMode.currentTool; set => Shopkeeper.BuildMode.currentTool = value; }
     public BuildMode_ArrowIcon Arrow { get => currentArrow; }
+
+    public static BuildData CurrentFloorPlan
+    {
+        get { return Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel]; }
+    }
+
 
     public void OpenBuildTool_1(int type)
     {
@@ -66,12 +77,13 @@ public class BuildMode : MonoBehaviour
 
         if (CurrentTool != BuildToolType.None)
         {
-            currentArrow = Instantiate(prefab_Arrow, transform);
-            currentArrow.gameObject.SetActive(true);
+
         }
 
         if (CurrentTool == BuildToolType.Wall)
-        {     
+        {
+            currentArrow = Instantiate(prefab_Arrow, transform);
+            currentArrow.gameObject.SetActive(true);
             currentArrow.spriteRendr_Icon.sprite = Shopkeeper.InternalAsset.Icon_Buildmode_Wall;
         }
     }
@@ -93,10 +105,26 @@ public class BuildMode : MonoBehaviour
             currentToolScript = null;
         }
 
+        if (CurrentTool == BuildToolType.Wallpaper)
+        {
+            currentToolScript = _wallpaper;
+        }
+
+        if (CurrentTool == BuildToolType.Flooring)
+        {
+            currentToolScript = null;
+        }
+
         if (currentToolScript != null)
         {
             currentToolScript.RunTool();
         }
+    }
+
+    public void FinalizedMesh()
+    {
+        //render walls
+        //all walls combine mesh
     }
 
     

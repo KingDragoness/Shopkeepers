@@ -13,11 +13,16 @@ public class ModularUI_TooltipHighlightable : MonoBehaviour, IPointerEnterHandle
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Tooltip.ShowTooltip(content);
+        Tooltip.ShowTooltip(content, this);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         Tooltip.HideTooltip();
+    }
+
+    private void OnDisable()
+    {
+        Tooltip.TryDisable(this);
     }
 }

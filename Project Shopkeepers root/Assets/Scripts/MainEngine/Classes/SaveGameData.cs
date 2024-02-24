@@ -15,26 +15,62 @@ public class BuildData
     public int level = 0;
 
     [System.Serializable]
-    public class WallDot
+    public class WallData
     {
         public Vector2Int pos;
-        public List<Vector2Int> connectedDots = new List<Vector2Int>(); //only four possible connections
+        public bool x_wall = false;
+        public bool y_wall = false;
 
-        public WallDot(Vector2Int pos)
+        public bool isBothWalls()
+        {
+            if (x_wall && y_wall) return true;
+
+            return false;
+        }
+
+        //x_aSide wallpaper
+        //x_bSide wallpaper
+        public string wallpaperAssetPath_x_aSide = "";
+        public string wallpaperAssetPath_x_bSide = "";
+        public string wallpaperAssetPath_y_aSide = "";
+        public string wallpaperAssetPath_y_bSide = "";
+
+        public WallData(Vector2Int pos, bool _hasXwall, bool _hasYwall)
         {
             this.pos = pos;
+            this.x_wall = _hasXwall;
+            this.y_wall = _hasYwall;
         }
 
-        public void AddConnection(Vector2Int dot)
+        public Vector2Int PrevOffset(Vector2Int offset)
         {
-            if (connectedDots.Exists(x => x == dot) == false)
-            {
-                connectedDots.Add(dot);
-            }
+            return pos + offset;
         }
+        public Vector2Int PrevX()
+        {
+            return pos + new Vector2Int(-1, 0);
+        }
+        public Vector2Int PrevY()
+        {
+            return pos + new Vector2Int(0, -1);
+        }
+        public Vector2Int NextX()
+        {
+            return pos + new Vector2Int(1,0);
+        }
+        public Vector2Int NextY()
+        {
+            return pos + new Vector2Int(0,1);
+        }
+
+        public Vector2Int CornerUpXY()
+        {
+            return pos + new Vector2Int(1, 1);
+        }
+
     }
 
-    public List<WallDot> allWalls = new List<WallDot>();
+    public List<WallData> allWallDatas = new List<WallData>();
 
 
 }

@@ -37,6 +37,31 @@ public static class ShopkeeperUtilities
         return false;
     }
 
+    public static BuildData.WallData IsWallDataExistAt(this List<BuildData.WallData> list, Vector2Int pos)
+    {
+        var wallDat = list.Find(x => x.pos.x == pos.x && x.pos.y == pos.y);
+
+        if (wallDat != null)
+        {
+            if (wallDat.x_wall | wallDat.y_wall)
+            {
+                return wallDat;
+            }
+        }
+
+        return null;
+    }
+
+
+    public static void RemoveAllEmptyWalls(this List<BuildData.WallData> list)
+    {
+        foreach (var wall in list.Clone())
+        {
+            list.RemoveAll(x => x.x_wall == false && x.y_wall == false);
+        }
+
+    }
+
     public static void DestroyAndClearList<T>(this List<T> list) where T : Component
     {
         foreach (var wall in list)
@@ -48,25 +73,7 @@ public static class ShopkeeperUtilities
         list.Clear();
     }
 
-    /// <summary>
-    /// Every wall dots must know its connections
-    /// </summary>
-    public static void ShareWallConnections(this List<BuildData.WallDot> _wallDots)
-    {
-        //Assume dot A, B
-        foreach(var walldot_0 in _wallDots)
-        {
-            foreach (var walldot in _wallDots)
-            {
-                //dot B has connections to dot A then add it
-                if (walldot_0.connectedDots.Exists(x => x == walldot.pos))
-                {
-                    if (walldot.connectedDots.Exists(x => x == walldot_0.pos) == false) walldot.connectedDots.Add(walldot_0.pos);
-                }
-            }
-        }
 
-    }
 
     public static void DestroyAndClearList_1(this List<GameObject> list)
     {

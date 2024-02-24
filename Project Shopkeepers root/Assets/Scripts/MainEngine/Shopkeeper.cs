@@ -16,6 +16,7 @@ using Sirenix.OdinInspector;
 public class Shopkeeper : MonoBehaviour
 {
 
+    [SerializeField] private Transform _3dSpace;
     [SerializeField] private ShopkeeperGame _game;
     [SerializeField] private DatabaseAssetHandler _database;
     [SerializeField] private AssetCreator _assetCreator;
@@ -24,6 +25,14 @@ public class Shopkeeper : MonoBehaviour
     [SerializeField] private BuildMode _buildMode;
     [SerializeField] private ConsoleCommands _consoleCommand;
     [SerializeField] private InternalGameAssetDatabase _internalAsset;
+
+    public static Transform Scene
+    {
+        get
+        {
+            return Instance._3dSpace;
+        }
+    }
 
     public static ShopkeeperGame Game
     {

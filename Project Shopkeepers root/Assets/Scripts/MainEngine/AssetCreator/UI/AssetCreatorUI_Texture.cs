@@ -19,6 +19,8 @@ public class AssetCreatorUI_Texture : AssetCreatorWindow
     public Texture2D loadedTextureMain;
     [ReadOnly] public SKUI_FilepathField inputfield_imagePath;
     [ReadOnly] public SKUI_InputField inputfield_imageName;
+    [ReadOnly] public SKUI_Bool bool_isWallpaper;
+    [ReadOnly] public SKUI_Bool bool_isFlooring;
 
 
     private void Awake()
@@ -48,6 +50,8 @@ public class AssetCreatorUI_Texture : AssetCreatorWindow
         if (newSKAsset == null) return;
         skAsset_Texture = newSKAsset;
         inputfield_imageName.inputfield.text = skAsset_Texture.fileName;
+        bool_isWallpaper.toggle.isOn = skAsset_Texture.isWallpaper;
+        bool_isFlooring.toggle.isOn = skAsset_Texture.isFlooring;
 
         RefreshMat();
         RefreshUI();
@@ -57,6 +61,9 @@ public class AssetCreatorUI_Texture : AssetCreatorWindow
     {
         skAsset_Texture = new SK_Texture();
         inputfield_imageName.inputfield.text = "";
+        bool_isWallpaper.toggle.isOn = false;
+        bool_isFlooring.toggle.isOn = false;
+
         base.NewFile_PromptConfirm(args);
         RefreshMat();
     }
@@ -114,9 +121,21 @@ public class AssetCreatorUI_Texture : AssetCreatorWindow
         inputfield_imageName = Shopkeeper.UI.DrawTextInputField(parentContent, "File name: ", placeholderText: "Enter name...");
         inputfield_imageName.inputfield.onEndEdit.AddListener(OnEndEdit_InputField);
 
+
+        bool_isWallpaper = Shopkeeper.UI.DrawBoolField(parentContent, "Is Wallpaper");
+        bool_isWallpaper.toggle.onValueChanged.AddListener(OnEndEdit);
+
+        bool_isFlooring = Shopkeeper.UI.DrawBoolField(parentContent, "Is Flooring");
+        bool_isFlooring.toggle.onValueChanged.AddListener(OnEndEdit);
         //var dropdown1 = Shopkeeper.UI.DrawDropdown(parentContent, new string[2] { "Standard (Specular)", "Diffuse Normal" }, "Shader Type");
     }
 
+    public void OnEndEdit(bool b)
+    {
+        skAsset_Texture.isWallpaper = bool_isWallpaper.toggle.isOn;
+        skAsset_Texture.isFlooring = bool_isFlooring.toggle.isOn;
+        RefreshUI();
+    }
 
     public void OnEndEdit_InputField(string s)
     {

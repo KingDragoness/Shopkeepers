@@ -12,13 +12,14 @@ public class BuildMode_ArrowIcon : MonoBehaviour
     public Color color_ArrowUsed;
     public Color color_ArrowIdle;
     public float maxDistance = 45f;
+    public LayerMask layerMask_ray;
 
     private void Update()
     {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, maxDistance))
+        if (Physics.Raycast(ray, out hit, maxDistance, layerMask_ray))
         {
             SetPosition(hit.point);
 
