@@ -3475,6 +3475,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   debug_wallPillar: {fileID: 330652487}
   debug_line: {fileID: 748810385}
+  debug_linev2: {fileID: 0}
   DEBUG_Allow_GenerateDebugs: 1
   prefab_Wall_Simple: {fileID: 1272344538}
   prefab_Wall_Simplev2: {fileID: 825387307}
@@ -6576,7 +6577,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &732083229
 Transform:
   m_ObjectHideFlags: 0
@@ -15343,6 +15344,7 @@ MonoBehaviour:
   debug_wallpaperTestA: {fileID: 1354705324}
   debug_wallpaperTestB: {fileID: 1396888698}
   defaultWallMaterial: {fileID: 2100000, guid: dbf5f1d69a91c9c47b45a8f228aeb927, type: 2}
+  _wallselections: []
 --- !u!1 &1740210869
 GameObject:
   m_ObjectHideFlags: 0
@@ -17439,7 +17441,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2004878343
 Transform:
   m_ObjectHideFlags: 0

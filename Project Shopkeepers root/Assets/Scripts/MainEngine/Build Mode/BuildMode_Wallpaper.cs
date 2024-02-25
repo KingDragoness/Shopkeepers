@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+using System.Linq;
 
 [System.Serializable]
 public class WallSelection
@@ -53,6 +54,10 @@ public class WallSelection
     {
         return pos + offset;
     }
+    public Vector2Int PrevOffset(int x, int y)
+    {
+        return pos + new Vector2Int(x,y);
+    }
     public Vector2Int PrevX()
     {
         return pos + new Vector2Int(-1, 0);
@@ -73,6 +78,13 @@ public class WallSelection
     public Vector2Int CornerUpXY()
     {
         return pos + new Vector2Int(1, 1);
+    }
+
+    public bool CompareIsSimilar(WallSelection other)
+    {
+        if (pos == other.pos && wall_axis == other.wall_axis && wall_side == other.wall_side) return true;
+
+        return false;
     }
 
     //Wall RULES
@@ -166,6 +178,7 @@ public class BuildMode_Wallpaper : BuildToolScript
         {
             if (b == true && Input.GetMouseButton(0) == false)
             {
+                previewHighlightPrefabs.DestroyAndClearList_1();
                 previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
                 BuildMode.Wall.ReRenderWallpaperOnly(previewWalldatas);
 
@@ -205,6 +218,7 @@ public class BuildMode_Wallpaper : BuildToolScript
             return;
         }
 
+        previewHighlightPrefabs.DestroyAndClearList_1();
         previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
         previousWallObj = originWallpaper;
         _wallselections.Clear();
@@ -229,38 +243,189 @@ public class BuildMode_Wallpaper : BuildToolScript
             //available wall to select
             var traverseables = GetTraverseableWalls(currentWall);
 
+            if (traverseables.Count == 0)
+            {
+                has_ClosedLoop = true;
+                break;
+            }
+
+            WallSelection tempWall = null;
+
+            foreach(var wall in traverseables)
+            {
+                if (_wallselections.Contains(wall)) continue;
+                tempWall = wall;
+                break;
+            }
+
+            if (tempWall == null)
+            {
+                has_ClosedLoop = true;
+                break;
+            }
+
+            _wallselections.Add(tempWall);
+            currentWall = tempWall;
+
             attempt++;
         }
 
+        if (attempt >= 99) { Debug.Log("BROKEN! Function is not working!"); }
+
+        foreach(var wallSelected in _wallselections)
+        {
+            GameObject prefab = debug_wallpaperTestB;
+            if (wallSelected.wall_side == WallObject.Side.B_Side) prefab = debug_wallpaperTestA;
+
+            Vector3 _rotation = Vector3.zero;
+            var wallDebug = Instantiate(prefab, transform);
+            wallDebug.gameObject.SetActive(true);
+            if (wallSelected.wall_axis == WallObject.WallFacing.Y_Axis) _rotation = new Vector3(0, -90, 0);
+
+            wallDebug.transform.position = new Vector3(wallSelected.pos.x, 0, wallSelected.pos.y);
+            wallDebug.transform.eulerAngles = _rotation;
+
+            previewHighlightPrefabs.Add(wallDebug);
+
+        }
 
     }
 
+    /// <summary>
+    /// Bruh why not just paint on one side of the wall (Y-axis b-wall all the way) no need to tracing like a madman.
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <returns></returns>
     private List<WallSelection> GetTraverseableWalls(WallSelection origin)
     {
+        List<WallSelection> traverseables = new List<WallSelection>();
         WallSelection.Type type = origin.GetSideType();
 
-        //HOLY FUCKING THIS IS RETARDED
-        //IS THERE ANY BETTER FUCKING METHOD????
-        if (type == WallSelection.Type.yb)
-        {
-            //available options
-            //(-1,1) xa
-            //(0,1) yb
-            //(0,1) xb
-            //(0,-1) yb
-            //(-1,0) xb
-            //(0,0) xa 
-        }
+
         if (type == WallSelection.Type.ya)
         {
             //available options
+            //(0,-1) ya
             //(-1,1) xb
             //(0,1) ya
+            //(0,1) xa
+            //(-1,0) xa
+            //(0,0) xb 
+
+            WallSelection[] available = new WallSelection[6]
+            {
+                new WallSelection(origin.pos + new Vector2Int(0, -1), WallObject.Side.A_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(-1, 1), WallObject.Side.B_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, 1), WallObject.Side.A_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, 1), WallObject.Side.A_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(-1, 0), WallObject.Side.A_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, 0), WallObject.Side.B_Side, WallObject.WallFacing.X_Axis)
+            }
+            ;
+
+            available = available.ToList().FindAll(x => _wallselections.FindWallSelectionExists(x) == false).ToArray(); 
+
+            foreach(var ws in available)
+            {
+                if (CanTraverse(origin, ws))
+                    traverseables.Add(ws);
+            }
+
+
+            //foreach (var trav1 in traverseables) Debug.Log(trav1.pos);
+
+
+        }
+        if (type == WallSelection.Type.yb)
+        {
+            //available options
             //(0,-1) yb
+            //(-1,1) xa
+            //(0,1) yb
+            //(0,1) xb
             //(-1,0) xb
             //(0,0) xa 
+
+            WallSelection[] available = new WallSelection[6]
+             {
+                    new WallSelection(origin.pos + new Vector2Int(0, -1), WallObject.Side.B_Side, WallObject.WallFacing.Y_Axis),
+                    new WallSelection(origin.pos + new Vector2Int(-1, 1), WallObject.Side.A_Side, WallObject.WallFacing.X_Axis),
+                    new WallSelection(origin.pos + new Vector2Int(0, 1), WallObject.Side.B_Side, WallObject.WallFacing.Y_Axis),
+                    new WallSelection(origin.pos + new Vector2Int(0, 1), WallObject.Side.B_Side, WallObject.WallFacing.X_Axis),
+                    new WallSelection(origin.pos + new Vector2Int(-1, 0), WallObject.Side.B_Side, WallObject.WallFacing.X_Axis),
+                    new WallSelection(origin.pos + new Vector2Int(0, 0), WallObject.Side.A_Side, WallObject.WallFacing.X_Axis)
+             }
+             ;
+
+            available = available.ToList().FindAll(x => _wallselections.FindWallSelectionExists(x) == false).ToArray();
+
+            foreach (var ws in available)
+            {
+                if (CanTraverse(origin, ws))
+                    traverseables.Add(ws);
+            }
+        }
+        if (type == WallSelection.Type.xa)
+        {
+            //available options
+            //(-1,0) xa
+            //(1,0) xa
+            //(0,0) yb
+            //(1,0) ya
+            //(0,-1) ya
+            //(1,-1) yb
+            WallSelection[] available = new WallSelection[6]
+        {
+                new WallSelection(origin.pos + new Vector2Int(-1, -0), WallObject.Side.A_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(1, 0), WallObject.Side.A_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, 0), WallObject.Side.B_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(1, 0), WallObject.Side.A_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, -1), WallObject.Side.A_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(1, -1), WallObject.Side.B_Side, WallObject.WallFacing.Y_Axis)
+        }
+        ;
+
+            available = available.ToList().FindAll(x => _wallselections.FindWallSelectionExists(x) == false).ToArray();
+
+            foreach (var ws in available)
+            {
+                if (CanTraverse(origin, ws))
+                    traverseables.Add(ws);
+            }
+
+        }
+        if (type == WallSelection.Type.xb)
+        {
+            //available options
+            //(-1,0) xb
+            //(1,0) xb
+            //(0,0) ya
+            //(1,0) yb
+            //(0,-1) yb
+            //(1,-1) ya
+
+            WallSelection[] available = new WallSelection[6]
+           {
+                new WallSelection(origin.pos + new Vector2Int(-1, -0), WallObject.Side.B_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(1, 0), WallObject.Side.B_Side, WallObject.WallFacing.X_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, 0), WallObject.Side.A_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(1, 0), WallObject.Side.B_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(0, -1), WallObject.Side.B_Side, WallObject.WallFacing.Y_Axis),
+                new WallSelection(origin.pos + new Vector2Int(1, -1), WallObject.Side.A_Side, WallObject.WallFacing.Y_Axis)
+           }
+           ;
+
+            available = available.ToList().FindAll(x => _wallselections.FindWallSelectionExists(x) == false).ToArray();
+
+            foreach (var ws in available)
+            {
+                if (CanTraverse(origin, ws))
+                    traverseables.Add(ws);
+            }
         }
 
+
+        return traverseables;
     }
 
 
@@ -272,63 +437,370 @@ public class BuildMode_Wallpaper : BuildToolScript
     /// <returns></returns>
     private bool CanTraverse(WallSelection origin, WallSelection target)
     {
-        //self targeting
         
-        //xa -> yb always possible
-        if (origin.GetSideType() == WallSelection.Type.xa && target.GetSideType() == WallSelection.Type.yb)
+        if (origin.GetSideType() == WallSelection.Type.ya)
         {
-            return true;
-        }
-        if (origin.GetSideType() == WallSelection.Type.xa && target.GetSideType() == WallSelection.Type.xb)
-        {
-                
-            var wall_custom = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(new Vector2Int(1, -1)));
-
-            if (previewWalldatas.IsWallDataExistAt(origin.NextX()) == null)
+   
+            if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.NextY())
             {
-                if (wall_custom != null)
+                var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
+
+                if (wallMain != null && IsWallConnectedToThis(origin.pos, target.pos) == true)
                 {
-                    if (wall_custom.y_wall == false)
+                    if (wallMain.y_wall && IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(-1, 1)) == false)
                     {
                         return true;
                     }
-                }
-                else
+                }  
+            }
+
+            if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevY())
+            {
+                if (IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (IsWallConnectedToThis(origin.pos, origin.PrevX()) == false)
+                    {
+                        return true;
+                    }
+                }  
+            }
+
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(-1,1))
+            {
+                if (IsWallConnectedToThis(origin.NextY(), target.pos) == true)
                 {
                     return true;
                 }
             }
-        }
-        if (origin.GetSideType() == WallSelection.Type.ya && target.GetSideType() == WallSelection.Type.yb)
-        {
-            var wall_custom = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(new Vector2Int(-1, 1)));
 
-            if (previewWalldatas.IsWallDataExistAt(origin.NextY()) == null)
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(0, 0))
             {
-                if (wall_custom != null)
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.pos);
+
+                if (wallMain != null)
                 {
-                    if (wall_custom.x_wall == false)
-                    {
+                    if (wallMain.x_wall && IsWallConnectedToThis(origin.pos, origin.PrevX()) == false && IsWallConnectedToThis(origin.pos, origin.PrevY()) == false)
                         return true;
-                    }
                 }
-                else
+            }
+
+            if (target.GetSideType() == WallSelection.Type.xa && target.pos == origin.PrevX())
+            {
+                if (IsWallConnectedToThis(origin.pos, target.pos) == true)
                 {
                     return true;
                 }
             }
-        }
-        if (origin.GetSideType() == WallSelection.Type.ya && target.GetSideType() == WallSelection.Type.xb)
-        {
-            bool b1 = IsWallConnectedToThis(origin.pos, origin.PrevX());
-            bool b2 = IsWallConnectedToThis(origin.pos, origin.PrevY());
 
-            if (b1 == false && b2 == false) return true;
+            if (target.GetSideType() == WallSelection.Type.xa && target.pos == origin.PrevOffset(0, 1))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
+
+                if (wallMain != null)
+                {
+                    if (wallMain.x_wall == true && wallMain.y_wall == false && IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(-1,1)) == false)
+                        return true;
+                }
+            }
+
         }
+
+        if (origin.GetSideType() == WallSelection.Type.xb)
+        {
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.NextX())
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
+
+                if (wallMain != null && IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (wallMain.x_wall && IsWallConnectedToThis(origin.NextX(), origin.PrevOffset(1, -1)) == false)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevX())
+            {
+                if (IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (IsWallConnectedToThis(origin.pos, origin.PrevY()) == false)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.yb && target.pos == origin.PrevOffset(1, 0))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
+
+                if (wallMain != null)
+                {
+                    if (wallMain.y_wall && wallMain.x_wall == false && IsWallConnectedToThis(origin.NextX(), origin.PrevOffset(1, -1)) == false)
+                        return true;
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.yb && target.pos == origin.PrevOffset(0, -1))
+            {
+                if (IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    return true;
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevOffset(1, -1))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(1,-1));
+
+                if (wallMain != null)
+                {
+                    if (wallMain.y_wall && IsWallConnectedToThis(origin.pos, origin.NextX()) == true)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevOffset(0, 0))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.pos);
+
+                if (wallMain != null)
+                {
+                    if (wallMain.y_wall && IsWallConnectedToThis(origin.pos, origin.PrevX()) == false && IsWallConnectedToThis(origin.pos, origin.PrevY()) == false)
+                        return true;
+                }
+            }
+
+        }
+
+        if (origin.GetSideType() == WallSelection.Type.yb)
+        {
+
+            if (target.GetSideType() == WallSelection.Type.yb && target.pos == origin.NextY())
+            {
+                if (IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(1, 1)) == false)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.yb && target.pos == origin.PrevY())
+            {
+                if (IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (IsWallConnectedToThis(origin.pos, origin.NextX()) == false)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.xa && target.pos == origin.PrevOffset(-1, 1))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
+                var wallMain_1 = previewWalldatas.IsWallDataExistAt(origin.NextY());
+
+                if (wallMain != null)
+                {
+                    if (wallMain_1 != null)
+                    {
+                        if (wallMain.x_wall && wallMain_1.x_wall == false && wallMain_1.y_wall == false)
+                            return true;
+                    }
+                    else if (wallMain.x_wall)
+                    {
+                        return true;
+                    }
 
         
+                }
+            }
 
+            if (target.GetSideType() == WallSelection.Type.xa && target.pos == origin.PrevOffset(0, 0))
+            {
+                if (IsWallConnectedToThis(origin.pos, origin.NextX()) == true)
+                {
+                    return true;
+                }
+            }
 
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(-1,0))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
+
+                if (wallMain != null)
+                {
+                    if (wallMain.x_wall == true && IsWallConnectedToThis(origin.pos, origin.NextX()) == false && IsWallConnectedToThis(origin.pos, origin.PrevOffset(0, -1)) == false)
+                        return true;
+                }
+               
+            }
+
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(0, 1))
+            {
+                if (IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(1,1)) == true)
+                {
+                    return true;
+                }
+            }
+
+        }
+
+        if (origin.GetSideType() == WallSelection.Type.xa)
+        {
+            if (target.GetSideType() == WallSelection.Type.xa && target.pos == origin.NextX())
+            {
+                var nextwall = previewWalldatas.IsWallDataExistAt(target.pos);
+
+                if (nextwall != null && IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (nextwall.x_wall && nextwall.y_wall == false)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.xa && target.pos == origin.PrevX())
+            {
+                var originWall = previewWalldatas.IsWallDataExistAt(origin.pos);
+
+                if (originWall != null && IsWallConnectedToThis(origin.pos, target.pos) == true)
+                {
+                    if (originWall.y_wall == false && originWall.x_wall)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevOffset(1, 0))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.NextX());
+
+                if (wallMain != null)
+                {
+                    if (wallMain.y_wall == true)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.yb && target.pos == origin.PrevOffset(0, 0))
+            {
+                if (IsWallConnectedToThis(origin.pos, origin.NextY()) == true)
+                {
+                    return true;
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.yb && target.pos == origin.PrevOffset(1, -1))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.NextX());
+                var wallMain_1 = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(1, -1));
+
+                if (wallMain != null)
+                {
+                    if (IsWallConnectedToThis(wallMain.pos, target.pos) == true && wallMain.x_wall == false && wallMain.y_wall == false)
+                        return true;
+                }
+                if (wallMain_1 != null)
+                {
+                    if (wallMain == null && wallMain_1.y_wall)
+                        return true;
+
+                    if (wallMain != null && wallMain_1.y_wall)
+                    {
+                        if (IsWallConnectedToThis(wallMain.pos, target.pos) == true && wallMain.x_wall == false && wallMain.y_wall == false)
+                            return true;
+                    }
+                }
+            }
+
+            if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevOffset(0, -1))
+            {
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.pos);
+
+                if (wallMain != null)
+                {
+                    if (IsWallConnectedToThis(origin.pos, origin.PrevX()) == false && IsWallConnectedToThis(origin.pos, origin.PrevY()) == true && wallMain.y_wall == false)
+                        return true;
+                }
+            }
+
+        }
+
+        {
+            //Bad organization
+            //if (origin.pos == target.pos)
+            //{
+            //    //xa -> yb always possible
+            //    if (origin.GetSideType() == WallSelection.Type.xa && target.GetSideType() == WallSelection.Type.yb)
+            //    {
+            //        return true;
+            //    }
+            //    if (origin.GetSideType() == WallSelection.Type.xa && target.GetSideType() == WallSelection.Type.xb)
+            //    {
+
+            //        var wall_custom = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(new Vector2Int(1, -1)));
+
+            //        if (previewWalldatas.IsWallDataExistAt(origin.NextX()) == null)
+            //        {
+            //            if (wall_custom != null)
+            //            {
+            //                if (wall_custom.y_wall == false)
+            //                {
+            //                    return true;
+            //                }
+            //            }
+            //            else
+            //            {
+            //                return true;
+            //            }
+            //        }
+            //    }
+            //    if (origin.GetSideType() == WallSelection.Type.ya && target.GetSideType() == WallSelection.Type.yb)
+            //    {
+            //        var wall_custom = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(new Vector2Int(-1, 1)));
+
+            //        if (previewWalldatas.IsWallDataExistAt(origin.NextY()) == null)
+            //        {
+            //            if (wall_custom != null)
+            //            {
+            //                if (wall_custom.x_wall == false)
+            //                {
+            //                    return true;
+            //                }
+            //            }
+            //            else
+            //            {
+            //                return true;
+            //            }
+            //        }
+            //    }
+            //    if (origin.GetSideType() == WallSelection.Type.ya && target.GetSideType() == WallSelection.Type.xb)
+            //    {
+            //        bool b1 = IsWallConnectedToThis(origin.pos, origin.PrevX());
+            //        bool b2 = IsWallConnectedToThis(origin.pos, origin.PrevY());
+
+            //        if (b1 == false && b2 == false) return true;
+            //    }
+            //}
+            //if (target.pos == origin.NextX()) //(1,0)
+            //{
+            //    if (origin.GetSideType() == WallSelection.Type.ya)
+            //    {
+            //        if ()
+            //}
+            //}
+        }
 
         return false;
     }
@@ -338,8 +810,30 @@ public class BuildMode_Wallpaper : BuildToolScript
         var wallData = previewWalldatas.IsWallDataExistAt(pos);
         var targetWallData = previewWalldatas.IsWallDataExistAt(target);
 
-        if (wallData == null) return false;
-        if (targetWallData == null) return false;
+        if (wallData == null)
+        {
+            if (targetWallData != null)
+            {
+                if (targetWallData.x_wall && pos == target + new Vector2Int(1,0))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        if (targetWallData == null)
+        {
+            if (wallData != null)
+            {
+                if (wallData.x_wall && target == pos + new Vector2Int(1, 0))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         var next_X = wallData.NextX();
         var next_Y = wallData.NextY();
@@ -359,8 +853,11 @@ public class BuildMode_Wallpaper : BuildToolScript
             return true;
         }
 
+
         if (prev_X_WallData != null)
         {
+            //Debug.Log($"{pos} | {target}");
+
             if (prev_X_WallData.x_wall && target == prev_X)
             {
                 return true;
@@ -369,7 +866,7 @@ public class BuildMode_Wallpaper : BuildToolScript
 
         if (prev_Y_WallData != null)
         {
-            if (prev_X_WallData.y_wall && target == prev_Y)
+            if (prev_Y_WallData.y_wall && target == prev_Y)
             {
                 return true;
             }

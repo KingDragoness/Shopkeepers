@@ -53,6 +53,21 @@ public static class ShopkeeperUtilities
     }
 
 
+    public static bool FindWallSelectionExists(this List<WallSelection> list, WallSelection target)
+    {
+        foreach(var item in list)
+        {
+            if (item.CompareIsSimilar(target))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+
     public static void RemoveAllEmptyWalls(this List<BuildData.WallData> list)
     {
         foreach (var wall in list.Clone())
