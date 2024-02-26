@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Sirenix.OdinInspector;
+using ToolBox.Pools;
 
 public class UITab_BuildMode_Wallpaper : MonoBehaviour
 {
@@ -24,6 +25,11 @@ public class UITab_BuildMode_Wallpaper : MonoBehaviour
         RefreshUI();
     }
 
+    private void Awake()
+    {
+        prefab.gameObject.Populate(10);
+    }
+
 
 
     public void SelectWallpaper(UITab_BuildMode_WallpaperButton button)
@@ -36,25 +42,53 @@ public class UITab_BuildMode_Wallpaper : MonoBehaviour
 
     private void RefreshUI()
     {
-        allButtons.DestroyAndClearList();
+        foreach(var button in allButtons)
+        {
+            button.button.onClick.RemoveAllListeners();
+        }
 
-        foreach(var meta in BuildMode_Wallpaper.GetAllWallpaperTextures())
+        allButtons.ReleasePoolObject();
+        int selectedIndex = -1;
+        if (currentButton != null) selectedIndex = currentButton.index;
+        int index = 0;
+
+        foreach (var meta in BuildMode_Wallpaper.GetAllWallpaperTextures())
         {
             var texture = Shopkeeper.Database.Load_SKTexture(meta);
-            var button = Instantiate(prefab, parentButton);
+            var button = prefab.gameObject.Reuse<UITab_BuildMode_WallpaperButton>(parentButton); //Instantiate(prefab, parentButton);
             button.gameObject.SetActive(true);
             button.button.onClick.AddListener(() => SelectWallpaper(button));
             button.skTextureRef = meta;
+            button.index = index;
 
             if (currentButton != null)
             {
-                if (currentButton.skTextureRef == button.skTextureRef)
+                if (selectedIndex == button.index)
                 {
                     button.button.interactable = false;
                 }
+                else
+                {
+                    button.button.interactable = true;
+
+                }
+
+                //if (currentButton.skTextureRef == button.skTextureRef)
+                //{
+                //    button.button.interactable = false;
+                //}
+                //else
+                //{
+                //    button.button.interactable = true;
+                //}
+            }
+            else
+            {
+                button.button.interactable = true;
             }
 
             button.image.texture = texture;
+            index++;
             allButtons.Add(button);
 
         }

@@ -17,7 +17,7 @@ public class BuildData
     [System.Serializable]
     public class WallData
     {
-        public Vector2Int pos;
+        public Vector2Int pos = new Vector2Int();
         public bool x_wall = false;
         public bool y_wall = false;
 
@@ -35,12 +35,44 @@ public class BuildData
         public string wallpaperAssetPath_y_aSide = "";
         public string wallpaperAssetPath_y_bSide = "";
 
-        public WallData(Vector2Int pos, bool _hasXwall, bool _hasYwall)
+        public void ResetData()
         {
-            this.pos = pos;
-            this.x_wall = _hasXwall;
-            this.y_wall = _hasYwall;
+            pos.x = 0;
+            pos.y = 0;
+            this.x_wall = false;
+            this.y_wall = false;
+            wallpaperAssetPath_x_aSide = "";
+            wallpaperAssetPath_x_bSide = "";
+            wallpaperAssetPath_y_aSide = "";
+            wallpaperAssetPath_y_bSide = "";
+
         }
+
+        public void CopyData(WallData toCopy)
+        {
+            pos = toCopy.pos;
+            x_wall = toCopy.x_wall;
+            y_wall = toCopy.y_wall;
+            wallpaperAssetPath_x_aSide = toCopy.wallpaperAssetPath_x_aSide;
+            wallpaperAssetPath_x_bSide = toCopy.wallpaperAssetPath_x_bSide;
+            wallpaperAssetPath_y_aSide = toCopy.wallpaperAssetPath_y_aSide;
+            wallpaperAssetPath_y_bSide = toCopy.wallpaperAssetPath_y_bSide;
+        }
+
+        public bool IsSimilarWith(WallData target)
+        {
+            if (pos.x == target.pos.x && pos.y == target.pos.y && x_wall == target.x_wall && y_wall == target.y_wall &&
+                wallpaperAssetPath_x_aSide == target.wallpaperAssetPath_x_aSide &&
+                wallpaperAssetPath_x_bSide == target.wallpaperAssetPath_x_bSide &&
+                wallpaperAssetPath_y_aSide == target.wallpaperAssetPath_y_aSide &&
+                wallpaperAssetPath_y_bSide == target.wallpaperAssetPath_y_bSide)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
 
         public Vector2Int PrevOffset(Vector2Int offset)
         {

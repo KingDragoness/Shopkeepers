@@ -6,6 +6,7 @@ using UnityEngine.AI;
 using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
+using ToolBox.Pools;
 
 public static class ShopkeeperUtilities
 {
@@ -52,6 +53,49 @@ public static class ShopkeeperUtilities
         return null;
     }
 
+    public static void ResetWallDatas(this List<BuildData.WallData> list)
+    {
+        foreach (var item in list)
+        {
+            item.ResetData();
+        }
+
+    }
+
+    public static void SetWallDatas(this List<BuildData.WallData> list, List<BuildData.WallData> toCopyFrom)
+    {
+        int index = 0;
+        foreach (var item in list)
+        {
+            item.CopyData(toCopyFrom[index]);
+            index++;
+        }
+
+    }
+
+    public static BuildData.WallData[] CreateWalldataArray(int size_X, int size_Y)
+    {
+        List<BuildData.WallData> FUCK_ARRAY = new List<BuildData.WallData>();
+
+        int index = 0;
+        for(int x = 0; x < (size_X + 1); x++)
+        {
+            for(int y = 0; y < (size_Y + 1); y++)
+            {
+                BuildData.WallData wallData = new BuildData.WallData();
+                int pos_x = -Mathf.FloorToInt(size_X / 2) + x;
+                int pos_y = y;
+
+                wallData.pos = new Vector2Int(pos_x, pos_y);
+
+                FUCK_ARRAY.Add(wallData);
+                index++;
+            }
+        }
+
+        return FUCK_ARRAY.ToArray();
+    }
+
 
     public static bool FindWallSelectionExists(this List<WallSelection> list, WallSelection target)
     {
@@ -96,6 +140,28 @@ public static class ShopkeeperUtilities
         {
             if (wall == null) continue;
             UnityEngine.Object.Destroy(wall.gameObject);
+        }
+
+        list.Clear();
+    }
+
+    public static void ReleasePoolObject(this List<GameObject> list)
+    {
+        foreach (var wall in list)
+        {
+            if (wall == null) continue;
+            wall.Release();
+        }
+
+        list.Clear();
+    }
+
+    public static void ReleasePoolObject<T>(this List<T> list) where T : Component
+    {
+        foreach (var wall in list)
+        {
+            if (wall == null) continue;
+            wall.gameObject.Release();
         }
 
         list.Clear();

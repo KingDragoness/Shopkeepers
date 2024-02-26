@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
 using System.Linq;
+using ToolBox.Pools;
 
 [System.Serializable]
 public class WallSelection
@@ -126,6 +127,12 @@ public class BuildMode_Wallpaper : BuildToolScript
     }
 
 
+    private void Awake()
+    {
+        debug_wallpaperTestA.Populate(5);
+        debug_wallpaperTestB.Populate(5);
+    }
+
 
     public void SetWallpaper(SK_Texture texture)
     {
@@ -154,9 +161,23 @@ public class BuildMode_Wallpaper : BuildToolScript
                     }
 
                     wallDetected = true;
+
+
+                    if (Input.GetMouseButtonUp(0))
+                    {
+                        if (Input.GetKey(KeyCode.LeftShift))
+                        {
+                            HoveringTravellingWallpaper(wallObject, BuildMode.CurrentFloorPlan.allWallDatas);
+                        }
+                        else
+                        {
+                            HoveringWallpaper(wallObject, BuildMode.CurrentFloorPlan.allWallDatas);
+                        }
+                    }
+
                     if (Input.GetMouseButton(0))
                     {
-                        HoveringWallpaper(wallObject, BuildMode.CurrentFloorPlan.allWallDatas);
+         
                     }
                     else
                     {
@@ -169,6 +190,7 @@ public class BuildMode_Wallpaper : BuildToolScript
                             HoveringWallpaper(wallObject);
                         }
                     }
+
                 }
 
             }
@@ -178,7 +200,7 @@ public class BuildMode_Wallpaper : BuildToolScript
         {
             if (b == true && Input.GetMouseButton(0) == false)
             {
-                previewHighlightPrefabs.DestroyAndClearList_1();
+                previewHighlightPrefabs.ReleasePoolObject();
                 previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
                 BuildMode.Wall.ReRenderWallpaperOnly(previewWalldatas);
 
@@ -209,16 +231,16 @@ public class BuildMode_Wallpaper : BuildToolScript
     private List<GameObject> previewHighlightPrefabs = new List<GameObject>();
     [SerializeField] [ReadOnly] private List<WallSelection> _wallselections = new List<WallSelection>();
 
-    public void HoveringTravellingWallpaper(WallObject originWallpaper)
+    public void HoveringTravellingWallpaper(WallObject originWallpaper, List<BuildData.WallData> toOverride = null)
     {
         bool is_a_side = false;
 
-        if (previousWallObj == originWallpaper)
+        if (previousWallObj == originWallpaper && toOverride == null)
         {
             return;
         }
 
-        previewHighlightPrefabs.DestroyAndClearList_1();
+        previewHighlightPrefabs.ReleasePoolObject();
         previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
         previousWallObj = originWallpaper;
         _wallselections.Clear();
@@ -270,7 +292,7 @@ public class BuildMode_Wallpaper : BuildToolScript
             attempt++;
         }
 
-        if (attempt >= 99) { Debug.Log("BROKEN! Function is not working!"); }
+        if (attempt >= 199) { Debug.Log("BROKEN! Function is not working!"); }
 
         foreach(var wallSelected in _wallselections)
         {
@@ -278,7 +300,7 @@ public class BuildMode_Wallpaper : BuildToolScript
             if (wallSelected.wall_side == WallObject.Side.B_Side) prefab = debug_wallpaperTestA;
 
             Vector3 _rotation = Vector3.zero;
-            var wallDebug = Instantiate(prefab, transform);
+            var wallDebug = prefab.Reuse(transform); //Instantiate(prefab, transform);
             wallDebug.gameObject.SetActive(true);
             if (wallSelected.wall_axis == WallObject.WallFacing.Y_Axis) _rotation = new Vector3(0, -90, 0);
 
@@ -289,10 +311,258 @@ public class BuildMode_Wallpaper : BuildToolScript
 
         }
 
+        //painting wall
+
+        foreach (var wallSelected in _wallselections)
+        {
+            BuildData.WallData wallData = previewWalldatas.IsWallDataExistAt(wallSelected.pos);
+
+            if (toOverride != null)
+                wallData = toOverride.IsWallDataExistAt(wallSelected.pos);
+
+            if (wallSelected.GetSideType() == WallSelection.Type.xa)
+            {
+                wallData.wallpaperAssetPath_x_aSide = currentWallpaper.filePath_MainTexture;
+            }
+            else if (wallSelected.GetSideType() == WallSelection.Type.xb)
+            {
+                wallData.wallpaperAssetPath_x_bSide = currentWallpaper.filePath_MainTexture;
+            }
+            else if (wallSelected.GetSideType() == WallSelection.Type.ya)
+            {
+                wallData.wallpaperAssetPath_y_aSide = currentWallpaper.filePath_MainTexture;
+            }
+            else if (wallSelected.GetSideType() == WallSelection.Type.yb)
+            {
+                wallData.wallpaperAssetPath_y_bSide = currentWallpaper.filePath_MainTexture;
+            }
+
+
+        }
+
+
+        if (toOverride == null)
+        {
+            BuildMode.Wall.ReRenderWallpaperOnly(previewWalldatas);
+        }
+        else
+        {
+            BuildMode.Wall.ReRenderWallpaperOnly(toOverride);
+        }
+    }
+
+
+    public void HoveringWallpaper(WallObject wallObject, List<BuildData.WallData> toOverride = null)
+    {
+        bool is_a_side = false; //check camera direction
+
+        if (previousWallObj == wallObject && toOverride == null)
+        {
+            //status quo
+            return;
+        }
+
+        previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
+
+        previousWallObj = wallObject;
+
+
+        Transform parent = wallObject.transform.parent;
+
+        Vector3 localPos = parent.InverseTransformPoint(Camera.main.transform.position);
+        GameObject targetedObject = null;
+
+        if (localPos.z > 0)
+        {
+            debug_wallpaperTestA.gameObject.SetActive(false);
+            debug_wallpaperTestB.gameObject.SetActive(true);
+            is_a_side = true;
+
+            targetedObject = debug_wallpaperTestB;
+        }
+        else
+        {
+            debug_wallpaperTestA.gameObject.SetActive(true);
+            debug_wallpaperTestB.gameObject.SetActive(false);
+
+            targetedObject = debug_wallpaperTestA;
+        }
+
+        if (targetedObject != null)
+        {
+            targetedObject.transform.position = parent.transform.position;
+            targetedObject.transform.eulerAngles = parent.transform.eulerAngles;
+        }
+
+        var wallDataToChange = previewWalldatas.IsWallDataExistAt(wallObject.wallData.pos);
+
+
+        if (toOverride != null)
+        {
+            wallDataToChange = toOverride.IsWallDataExistAt(wallObject.wallData.pos);
+            //Debug.Log($"{wallDataToChange} some wall changed");
+        }
+
+        if (wallObject.currentWallFacing == WallObject.WallFacing.X_Axis)
+        {
+            if (is_a_side)
+            {
+                wallDataToChange.wallpaperAssetPath_x_aSide = currentWallpaper.filePath_MainTexture;
+            }
+            else
+            {
+                wallDataToChange.wallpaperAssetPath_x_bSide = currentWallpaper.filePath_MainTexture;
+            }
+        }
+        else
+        {
+            if (is_a_side)
+            {
+                wallDataToChange.wallpaperAssetPath_y_aSide = currentWallpaper.filePath_MainTexture;
+            }
+            else
+            {
+                wallDataToChange.wallpaperAssetPath_y_bSide = currentWallpaper.filePath_MainTexture;
+            }
+        }
+
+        if (toOverride == null)
+        {
+            BuildMode.Wall.ReRenderWallpaperOnly(previewWalldatas);
+        }
+        else
+        {
+            BuildMode.Wall.ReRenderWallpaperOnly(toOverride);
+        }
+    }
+
+    public void PaintWall(WallObject wallObject)
+    {
+        //0 no side
+        //1 b side
+        //2 a side
+        var skTexture_a = Shopkeeper.Database.Get_SKTexture(wallObject.currentWallFacing == WallObject.WallFacing.X_Axis ?  wallObject.wallData.wallpaperAssetPath_x_aSide : wallObject.wallData.wallpaperAssetPath_y_aSide);
+        var skTexture_b = Shopkeeper.Database.Get_SKTexture(wallObject.currentWallFacing == WallObject.WallFacing.X_Axis ? wallObject.wallData.wallpaperAssetPath_x_bSide : wallObject.wallData.wallpaperAssetPath_y_bSide);
+        Material material_a = null; 
+        Material material_b = null; 
+        if (skTexture_a != null) { material_a = Shopkeeper.Database.Load_Material(skTexture_a); }
+        if (skTexture_b != null) { material_b = Shopkeeper.Database.Load_Material(skTexture_b); }
+
+        Material[] mats = wallObject.meshRndrWall.materials;
+
+        if (material_b != null)
+        {
+            mats[1] = material_b;
+        }
+        else
+        {
+            mats[1] = defaultWallMaterial;
+        }
+
+        if (material_a != null)
+        {
+            mats[2] = material_a;
+        }
+        else
+        {
+            mats[2] = defaultWallMaterial;
+        }
+
+        wallObject.meshRndrWall.materials = mats;
     }
 
     /// <summary>
-    /// Bruh why not just paint on one side of the wall (Y-axis b-wall all the way) no need to tracing like a madman.
+    /// Horrible corner calculation!
+    /// </summary>
+    /// <param name="wallObject"></param>
+    /// <param name="allWallDots"></param>
+    public void PaintExtraWall(WallObject wallObject, List<BuildData.WallData> allWallDots = null)
+    {
+        //0 x_a side
+        //1 y_b side
+        //2 x_b side
+        //3 no side
+        //4 y_a side
+        var skTexture_x_a = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_x_aSide);
+        var skTexture_x_b = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_x_bSide);
+        var skTexture_y_a = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_y_aSide);
+        var skTexture_y_b = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_y_bSide);
+
+        if (wallObject.cornerXY_wall == true && allWallDots != null)
+        {
+            var prevX_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevOffset(new Vector2Int(-1,1)));
+
+            if (prevX_wall != null)
+            {
+                skTexture_x_a = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_aSide);
+                skTexture_x_b = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_bSide);
+            }
+        }
+
+        var cornerType = BuildMode.Wall.IsExtraWall_a_Corner(wallObject, allWallDots);
+
+        if (cornerType != BuildMode_Wall.WallCornerType.none && wallObject.cornerXY_wall == false)
+        {
+            wallObject.cornerType = cornerType;
+
+            if (cornerType == BuildMode_Wall.WallCornerType._xy)
+            {
+                var prevX_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevX());
+
+                if (prevX_wall != null)
+                {
+                    skTexture_x_a = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_aSide);
+                    skTexture_x_b = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_bSide);
+                }
+            }
+
+            if (cornerType == BuildMode_Wall.WallCornerType.x_y)
+            {
+                var prevY_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevY());
+
+                if (prevY_wall != null)
+                {
+                    skTexture_y_a = Shopkeeper.Database.Get_SKTexture(prevY_wall.wallpaperAssetPath_y_aSide);
+                    skTexture_y_b = Shopkeeper.Database.Get_SKTexture(prevY_wall.wallpaperAssetPath_y_bSide);
+                }
+            }
+        }
+
+
+        Material material_x_a = null;
+        Material material_x_b = null;
+        Material material_y_a = null;
+        Material material_y_b = null;
+
+        if (skTexture_x_a != null) { material_x_a = Shopkeeper.Database.Load_Material(skTexture_x_a); }
+        if (skTexture_x_b != null) { material_x_b = Shopkeeper.Database.Load_Material(skTexture_x_b); }
+        if (skTexture_y_a != null) { material_y_a = Shopkeeper.Database.Load_Material(skTexture_y_a); }
+        if (skTexture_y_b != null) { material_y_b = Shopkeeper.Database.Load_Material(skTexture_y_b); }
+
+        Material[] mats = wallObject.meshRndrWall.materials;
+
+        mats[0] = AssignMaterial(material_x_a);
+        mats[1] = AssignMaterial(material_y_b);
+        mats[2] = AssignMaterial(material_x_b);
+        mats[4] = AssignMaterial(material_y_a);
+
+
+
+
+        wallObject.meshRndrWall.materials = mats;
+    }
+
+    public Material AssignMaterial(Material mat)
+    {
+        if (mat == null) return defaultWallMaterial;
+
+        return mat;
+    }
+
+
+    #region Crazy Algorithm for wallpaint entire room
+    /// <summary>
+    ///
     /// </summary>
     /// <param name="origin"></param>
     /// <returns></returns>
@@ -323,9 +593,9 @@ public class BuildMode_Wallpaper : BuildToolScript
             }
             ;
 
-            available = available.ToList().FindAll(x => _wallselections.FindWallSelectionExists(x) == false).ToArray(); 
+            available = available.ToList().FindAll(x => _wallselections.FindWallSelectionExists(x) == false).ToArray();
 
-            foreach(var ws in available)
+            foreach (var ws in available)
             {
                 if (CanTraverse(origin, ws))
                     traverseables.Add(ws);
@@ -437,10 +707,10 @@ public class BuildMode_Wallpaper : BuildToolScript
     /// <returns></returns>
     private bool CanTraverse(WallSelection origin, WallSelection target)
     {
-        
+
         if (origin.GetSideType() == WallSelection.Type.ya)
         {
-   
+
             if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.NextY())
             {
                 var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
@@ -451,7 +721,7 @@ public class BuildMode_Wallpaper : BuildToolScript
                     {
                         return true;
                     }
-                }  
+                }
             }
 
             if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevY())
@@ -462,10 +732,10 @@ public class BuildMode_Wallpaper : BuildToolScript
                     {
                         return true;
                     }
-                }  
+                }
             }
 
-            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(-1,1))
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(-1, 1))
             {
                 if (IsWallConnectedToThis(origin.NextY(), target.pos) == true)
                 {
@@ -498,7 +768,7 @@ public class BuildMode_Wallpaper : BuildToolScript
 
                 if (wallMain != null)
                 {
-                    if (wallMain.x_wall == true && wallMain.y_wall == false && IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(-1,1)) == false)
+                    if (wallMain.x_wall == true && wallMain.y_wall == false && IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(-1, 1)) == false)
                         return true;
                 }
             }
@@ -552,7 +822,7 @@ public class BuildMode_Wallpaper : BuildToolScript
 
             if (target.GetSideType() == WallSelection.Type.ya && target.pos == origin.PrevOffset(1, -1))
             {
-                var wallMain = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(1,-1));
+                var wallMain = previewWalldatas.IsWallDataExistAt(origin.PrevOffset(1, -1));
 
                 if (wallMain != null)
                 {
@@ -618,7 +888,7 @@ public class BuildMode_Wallpaper : BuildToolScript
                         return true;
                     }
 
-        
+
                 }
             }
 
@@ -630,7 +900,7 @@ public class BuildMode_Wallpaper : BuildToolScript
                 }
             }
 
-            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(-1,0))
+            if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(-1, 0))
             {
                 var wallMain = previewWalldatas.IsWallDataExistAt(target.pos);
 
@@ -639,12 +909,12 @@ public class BuildMode_Wallpaper : BuildToolScript
                     if (wallMain.x_wall == true && IsWallConnectedToThis(origin.pos, origin.NextX()) == false && IsWallConnectedToThis(origin.pos, origin.PrevOffset(0, -1)) == false)
                         return true;
                 }
-               
+
             }
 
             if (target.GetSideType() == WallSelection.Type.xb && target.pos == origin.PrevOffset(0, 1))
             {
-                if (IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(1,1)) == true)
+                if (IsWallConnectedToThis(origin.NextY(), origin.PrevOffset(1, 1)) == true)
                 {
                     return true;
                 }
@@ -810,11 +1080,11 @@ public class BuildMode_Wallpaper : BuildToolScript
         var wallData = previewWalldatas.IsWallDataExistAt(pos);
         var targetWallData = previewWalldatas.IsWallDataExistAt(target);
 
-        if (wallData == null)
+        if (wallData == null) //impossible to be null
         {
             if (targetWallData != null)
             {
-                if (targetWallData.x_wall && pos == target + new Vector2Int(1,0))
+                if (targetWallData.x_wall && pos == target + new Vector2Int(1, 0))
                 {
                     return true;
                 }
@@ -877,208 +1147,5 @@ public class BuildMode_Wallpaper : BuildToolScript
     }
 
 
-
-
-    public void HoveringWallpaper(WallObject wallObject, List<BuildData.WallData> toOverride = null)
-    {
-        bool is_a_side = false; //check camera direction
-
-        if (previousWallObj == wallObject && toOverride == null)
-        {
-            //status quo
-            return;
-        }
-
-        previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
-
-        previousWallObj = wallObject;
-
-
-        Transform parent = wallObject.transform.parent;
-
-        Vector3 localPos = parent.InverseTransformPoint(Camera.main.transform.position);
-        GameObject targetedObject = null;
-
-        if (localPos.z > 0)
-        {
-            debug_wallpaperTestA.gameObject.SetActive(false);
-            debug_wallpaperTestB.gameObject.SetActive(true);
-            is_a_side = true;
-
-            targetedObject = debug_wallpaperTestB;
-        }
-        else
-        {
-            debug_wallpaperTestA.gameObject.SetActive(true);
-            debug_wallpaperTestB.gameObject.SetActive(false);
-
-            targetedObject = debug_wallpaperTestA;
-        }
-
-        if (targetedObject != null)
-        {
-            targetedObject.transform.position = parent.transform.position;
-            targetedObject.transform.eulerAngles = parent.transform.eulerAngles;
-        }
-
-        var wallDataToChange = previewWalldatas.IsWallDataExistAt(wallObject.wallData.pos);
-
-
-        if (toOverride != null)
-        {
-            wallDataToChange = toOverride.IsWallDataExistAt(wallObject.wallData.pos);
-            //Debug.Log($"{wallDataToChange} some wall changed");
-        }
-
-        if (wallObject.currentWallFacing == WallObject.WallFacing.X_Axis)
-        {
-            if (is_a_side)
-            {
-                wallDataToChange.wallpaperAssetPath_x_aSide = currentWallpaper.filePath_MainTexture;
-            }
-            else
-            {
-                wallDataToChange.wallpaperAssetPath_x_bSide = currentWallpaper.filePath_MainTexture;
-            }
-        }
-        else
-        {
-            if (is_a_side)
-            {
-                wallDataToChange.wallpaperAssetPath_y_aSide = currentWallpaper.filePath_MainTexture;
-            }
-            else
-            {
-                wallDataToChange.wallpaperAssetPath_y_bSide = currentWallpaper.filePath_MainTexture;
-            }
-        }
-
-        if (toOverride == null)
-        {
-            BuildMode.Wall.ReRenderWallpaperOnly(previewWalldatas);
-        }
-        else
-        {
-            BuildMode.Wall.ReRenderWallpaperOnly(toOverride);
-        }
-    }
-
-    public void PaintWall(WallObject wallObject)
-    {
-        //0 no side
-        //1 b side
-        //2 a side
-        var skTexture_a = Shopkeeper.Database.Get_SKTexture(wallObject.currentWallFacing == WallObject.WallFacing.X_Axis ?  wallObject.wallData.wallpaperAssetPath_x_aSide : wallObject.wallData.wallpaperAssetPath_y_aSide);
-        var skTexture_b = Shopkeeper.Database.Get_SKTexture(wallObject.currentWallFacing == WallObject.WallFacing.X_Axis ? wallObject.wallData.wallpaperAssetPath_x_bSide : wallObject.wallData.wallpaperAssetPath_y_bSide);
-        Material material_a = null; 
-        Material material_b = null; 
-        if (skTexture_a != null) { material_a = Shopkeeper.Database.Load_Material(skTexture_a); }
-        if (skTexture_b != null) { material_b = Shopkeeper.Database.Load_Material(skTexture_b); }
-
-        Material[] mats = wallObject.meshRndrWall.materials;
-
-        if (material_b != null)
-        {
-            mats[1] = material_b;
-        }
-        else
-        {
-            mats[1] = defaultWallMaterial;
-        }
-
-        if (material_a != null)
-        {
-            mats[2] = material_a;
-        }
-        else
-        {
-            mats[2] = defaultWallMaterial;
-        }
-
-        wallObject.meshRndrWall.materials = mats;
-    }
-
-    public void PaintExtraWall(WallObject wallObject, List<BuildData.WallData> allWallDots = null)
-    {
-        //0 x_a side
-        //1 y_b side
-        //2 x_b side
-        //3 no side
-        //4 y_a side
-        var skTexture_x_a = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_x_aSide);
-        var skTexture_x_b = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_x_bSide);
-        var skTexture_y_a = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_y_aSide);
-        var skTexture_y_b = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_y_bSide);
-
-        if (wallObject.cornerXY_wall == true && allWallDots != null)
-        {
-            var prevX_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevOffset(new Vector2Int(-1,1)));
-
-            if (prevX_wall != null)
-            {
-                skTexture_x_a = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_aSide);
-                skTexture_x_b = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_bSide);
-            }
-        }
-
-        var cornerType = BuildMode.Wall.IsExtraWall_a_Corner(wallObject, allWallDots);
-
-        if (cornerType != BuildMode_Wall.WallCornerType.none && wallObject.cornerXY_wall == false)
-        {
-            wallObject.cornerType = cornerType;
-
-            if (cornerType == BuildMode_Wall.WallCornerType._xy)
-            {
-                var prevX_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevX());
-
-                if (prevX_wall != null)
-                {
-                    skTexture_x_a = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_aSide);
-                    skTexture_x_b = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_bSide);
-                }
-            }
-
-            if (cornerType == BuildMode_Wall.WallCornerType.x_y)
-            {
-                var prevY_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevY());
-
-                if (prevY_wall != null)
-                {
-                    skTexture_y_a = Shopkeeper.Database.Get_SKTexture(prevY_wall.wallpaperAssetPath_y_aSide);
-                    skTexture_y_b = Shopkeeper.Database.Get_SKTexture(prevY_wall.wallpaperAssetPath_y_bSide);
-                }
-            }
-        }
-
-
-        Material material_x_a = null;
-        Material material_x_b = null;
-        Material material_y_a = null;
-        Material material_y_b = null;
-
-        if (skTexture_x_a != null) { material_x_a = Shopkeeper.Database.Load_Material(skTexture_x_a); }
-        if (skTexture_x_b != null) { material_x_b = Shopkeeper.Database.Load_Material(skTexture_x_b); }
-        if (skTexture_y_a != null) { material_y_a = Shopkeeper.Database.Load_Material(skTexture_y_a); }
-        if (skTexture_y_b != null) { material_y_b = Shopkeeper.Database.Load_Material(skTexture_y_b); }
-
-        Material[] mats = wallObject.meshRndrWall.materials;
-
-        mats[0] = AssignMaterial(material_x_a);
-        mats[1] = AssignMaterial(material_y_b);
-        mats[2] = AssignMaterial(material_x_b);
-        mats[4] = AssignMaterial(material_y_a);
-
-
-
-
-        wallObject.meshRndrWall.materials = mats;
-    }
-
-    public Material AssignMaterial(Material mat)
-    {
-        if (mat == null) return defaultWallMaterial;
-
-        return mat;
-    }
-
+    #endregion
 }

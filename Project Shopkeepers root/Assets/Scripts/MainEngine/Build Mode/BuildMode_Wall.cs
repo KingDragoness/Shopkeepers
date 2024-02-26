@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Sirenix.OdinInspector;
+using ToolBox.Pools;
 
 public class BuildMode_Wall : BuildToolScript
 {
@@ -21,13 +22,30 @@ public class BuildMode_Wall : BuildToolScript
     [FoldoutGroup("Prefabs")] public GameObject prefab_Wall_Triangle;
 
     private Vector3Int startingWallPoint = new Vector3Int();
-    private BuildData previewFloorPlan;
+    [SerializeField] [ReadOnly] private BuildData previewFloorPlan = new BuildData();
     [SerializeField] [ReadOnly] private int distance = 1;
     [SerializeField] [ReadOnly] private bool isInvalidDraw = false;
     [SerializeField] [ReadOnly] private bool isDeleteMode = false;
     private Vector2Int[] newDots = new Vector2Int[0];
+    private BuildData.WallData newWallDat = new BuildData.WallData();
+
+    private void Awake()
+    {
+        prefab_Wall_Simple.Populate(10);
+        prefab_Wall_Simplev2.Populate(10);
+        prefab_Wall_ExtraL.Populate(10);
+        debug_line.gameObject.Populate(10);
+        //debug_linev2.gameObject.Populate(10);
 
 
+    }
+
+    private void Start()
+    {
+        previewFloorPlan = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].Clone();
+    }
+
+    private Vector3Int prevPositionArrow = new Vector3Int();
 
     public override void RunTool()
     {
@@ -42,9 +60,9 @@ public class BuildMode_Wall : BuildToolScript
         {
             //set initial
             startingWallPoint = Shopkeeper.BuildMode.Arrow.GetArrowPosition();
-            previewFloorPlan = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].Clone();
             newDots = new Vector2Int[0];
-
+            previewFloorPlan.allWallDatas.ResetWallDatas();
+            previewFloorPlan.allWallDatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
         }
 
         if (Input.GetMouseButtonUp(0))
@@ -88,9 +106,16 @@ public class BuildMode_Wall : BuildToolScript
             }
 
 
-            DrawNewDots(newDots, isDeleteMode);
-            //paint dots on the map
+            if (prevPositionArrow != Shopkeeper.BuildMode.Arrow.GetArrowPosition())
+            {
+                previewFloorPlan.allWallDatas.ResetWallDatas();
+                previewFloorPlan.allWallDatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
+                DrawNewDots(newDots, isDeleteMode);
+            
+            }
+                //paint dots on the map
             Shopkeeper.BuildMode.Arrow.SetArrowColorUsed();
+            prevPositionArrow = Shopkeeper.BuildMode.Arrow.GetArrowPosition();
 
         }
         else
@@ -104,11 +129,11 @@ public class BuildMode_Wall : BuildToolScript
     public void DrawNewDots(Vector2Int[] allVector2, bool isDeleteMode = false, List<BuildData.WallData> toOverride = null)
     {
         List<Vector2Int> list_v2 = allVector2.ToList();
-        List<BuildData.WallData> tempWallDots = new List<BuildData.WallData>();
+        List<BuildData.WallData> allModifiedWalls = new List<BuildData.WallData>();
         bool is_X = false;
         bool is_Y = false;
 
-        if (isDeleteMode == true) tempWallDots.AddRange(previewFloorPlan.allWallDatas.Clone());
+        //if deletemode, the list is walls that wants to be deleted.
 
         if (allVector2.Length >= 2)
         {
@@ -130,54 +155,28 @@ public class BuildMode_Wall : BuildToolScript
             {
                 if (pos.x == highestPos.x && pos.y == highestPos.y) continue;
 
-                BuildData.WallData newWallDat = new BuildData.WallData(pos, is_X, is_Y);
-                BuildData.WallData similarWall = tempWallDots.Find(x => x.pos.x == pos.x && x.pos.y == pos.y);
+                newWallDat.ResetData();
+                BuildData.WallData similarWall = previewFloorPlan.allWallDatas.Find(x => x.pos.x == pos.x && x.pos.y == pos.y); //always exists
 
-                if (isDeleteMode == false)
-                {
-                    similarWall = previewFloorPlan.allWallDatas.Find(x => x.pos.x == pos.x && x.pos.y == pos.y).Clone();
-                }
+                if (is_X) similarWall.x_wall = true;
+                if (is_Y) similarWall.y_wall = true;
+                if (is_X && isDeleteMode) similarWall.x_wall = false;
+                if (is_Y && isDeleteMode) similarWall.y_wall = false;
 
-                if (similarWall != null)
-                {
-                    if (is_X) similarWall.x_wall = true;
-                    if (is_Y) similarWall.y_wall = true;
-                    if (is_X && isDeleteMode) similarWall.x_wall = false;
-                    if (is_Y && isDeleteMode) similarWall.y_wall = false;
-
-                    tempWallDots.Add(similarWall);
-                }
-                else
-                {
-                    if (isDeleteMode == false) tempWallDots.Add(newWallDat);
-                }
+                allModifiedWalls.Add(similarWall);
 
             }
         }
 
         if (toOverride != null)
         {
-            foreach(var wall in tempWallDots)
-            {
-                BuildData.WallData similarWall = toOverride.Find(x => x.pos.x == wall.pos.x && x.pos.y == wall.pos.y);
-
-                if (similarWall == null)
-                {
-                    toOverride.Add(wall);
-                }
-                else
-                {
-                    similarWall.x_wall = wall.x_wall;
-                    similarWall.y_wall = wall.y_wall;
-                }
-            }
-            toOverride.RemoveAllEmptyWalls();
-            RenderWalls(toOverride);
+            toOverride.SetWallDatas(previewFloorPlan.allWallDatas);
+            //toOverride.RemoveAllEmptyWalls();
+            RenderWalls(toOverride, allModifiedWalls);
         }
         else
         {
-            if (isDeleteMode == false) tempWallDots.AddRange(previewFloorPlan.allWallDatas);
-            RenderWalls(tempWallDots);
+            RenderWalls(previewFloorPlan.allWallDatas, allModifiedWalls);
         }
 
     }
@@ -221,29 +220,37 @@ public class BuildMode_Wall : BuildToolScript
         }
     }
 
-    public void RenderWalls(List<BuildData.WallData> allWallDots)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="allWallDots"></param>
+    /// <param name="optimizedRendering">Only change any unchanged walls.</param>
+    public void RenderWalls(List<BuildData.WallData> allWallDots, List<BuildData.WallData> allModifiedWalls)
     {
 
-        allWallTests.DestroyAndClearList_1();
-        allWallExtraTests.DestroyAndClearList_1();
-        allLineTests.DestroyAndClearList();
+        allWallTests.ReleasePoolObject();
+        allWallExtraTests.ReleasePoolObject();
+        allLineTests.ReleasePoolObject();
         alreadyDrawnLines.Clear();
-
+        List<BuildData.WallData> z_listDots = new List<BuildData.WallData>();
+        z_listDots.AddRange(allWallDots);
+        z_listDots.RemoveAll(x => !x.x_wall && !x.y_wall);
 
         if (DEBUG_Allow_GenerateDebugs)
         {
-            foreach (var wallDot in allWallDots)
+            /*
+            foreach (var wallDot in z_listDots)
             {
                 Vector3 pos = new Vector3(wallDot.pos.x, 0f, wallDot.pos.y);
 
-                var newWallprefab = Instantiate(debug_wallPillar, transform);
+                var newWallprefab = debug_wallPillar.Reuse(transform);//Instantiate(debug_wallPillar, transform);
                 newWallprefab.gameObject.SetActive(true);
                 newWallprefab.transform.position = pos;
                 allWallTests.Add(newWallprefab);
 
                 if (wallDot.x_wall)
                 {
-                    var newWireLine = Instantiate(debug_line, transform);
+                    var newWireLine = debug_line.gameObject.Reuse(transform).GetComponent<LineRenderer>();//Instantiate(debug_line, transform);
                     Vector3[] positions = new Vector3[2];
                     positions[0] = new Vector3(wallDot.pos.x, 0.02f, wallDot.pos.y);
                     positions[1] = new Vector3(wallDot.NextX().x, 0.02f, wallDot.pos.y);
@@ -257,7 +264,7 @@ public class BuildMode_Wall : BuildToolScript
 
                 if (wallDot.y_wall)
                 {
-                    var newWireLine = Instantiate(debug_line, transform);
+                    var newWireLine = debug_line.gameObject.Reuse(transform).GetComponent<LineRenderer>();//Instantiate(debug_line, transform);
                     Vector3[] positions = new Vector3[2];
                     positions[0] = new Vector3(wallDot.pos.x, 0.02f, wallDot.pos.y);
                     positions[1] = new Vector3(wallDot.pos.x, 0.02f, wallDot.NextY().y);
@@ -269,11 +276,21 @@ public class BuildMode_Wall : BuildToolScript
                     alreadyDrawnLines.Add(positions[1]);
                 }
             }
+        */
         }
 
-        foreach (var wallDot in allWallDots)
+        foreach (var wallDot in z_listDots)
         {
             if (!wallDot.x_wall && !wallDot.y_wall) continue;
+
+            if (allModifiedWalls.Find(x => x.pos.x == wallDot.pos.x) != null)
+            {
+                var similarData = previewFloorPlan.allWallDatas.Find(x => x.pos.x == wallDot.pos.x && x.pos.y == wallDot.pos.y);
+                if (wallDot.IsSimilarWith(similarData))
+                {
+                    //continue;
+                }
+            }
 
             for (int z1 = 0; z1 < 2; z1++)
             {
@@ -288,7 +305,7 @@ public class BuildMode_Wall : BuildToolScript
                     selectedPrefab = prefab_Wall_Simplev2;
                 }
 
-                var wall = Instantiate(selectedPrefab, Shopkeeper.Scene);
+                var wall = selectedPrefab.Reuse(Shopkeeper.Scene); //Instantiate(selectedPrefab, Shopkeeper.Scene);
                 WallObject wallObj = wall.GetComponentInChildren<WallObject>();
                 Vector3 _position = new Vector3(wallDot.pos.x, 0, wallDot.pos.y);
                 Vector3 _rotation = Vector3.zero;
@@ -334,6 +351,8 @@ public class BuildMode_Wall : BuildToolScript
 
         foreach (var wallDot in allWallDots)
         {
+            if (wallDot.x_wall == false && wallDot.y_wall == false) continue;
+
             //check all side connections
             bool left = false;
             bool right = false;
@@ -350,7 +369,7 @@ public class BuildMode_Wall : BuildToolScript
 
             if (connections <= 9)
             {
-                var extraWall = Instantiate(prefab_Wall_ExtraL, Shopkeeper.Scene);
+                var extraWall = prefab_Wall_ExtraL.Reuse(Shopkeeper.Scene); //Instantiate(prefab_Wall_ExtraL, Shopkeeper.Scene);
                 extraWall.gameObject.SetActive(true);
                 WallObject wallObj = extraWall.GetComponentInChildren<WallObject>();
                 wallObj.wallData = wallDot;
@@ -365,8 +384,7 @@ public class BuildMode_Wall : BuildToolScript
 
         foreach (var wallD in allWallDots)
         {
-           
-            var cornerUpWall = new BuildData.WallData(wallD.NextY(), false, false); //generating pseudo wall data and it only needs one to check
+            BuildData.WallData cornerUpWall = allWallDots.Find(x => x.pos == wallD.NextY()); //(wallD.NextY(), false, false); //generating pseudo wall data and it only needs one to check
 
             //we are pivot from the cornerupwall
             if (cornerUpWall != null)
@@ -387,10 +405,10 @@ public class BuildMode_Wall : BuildToolScript
                 if (connections == 2) //precisely only two connections, we generate it.
                 {
                     var prevX_wall = allWallDots.IsWallDataExistAt(cornerUpWall.PrevX());
-                    var extraWall = Instantiate(prefab_Wall_ExtraL, Shopkeeper.Scene);
+                    var extraWall = prefab_Wall_ExtraL.Reuse(Shopkeeper.Scene); //Instantiate(prefab_Wall_ExtraL, Shopkeeper.Scene);
                     extraWall.gameObject.SetActive(true);
                     WallObject wallObj = extraWall.GetComponentInChildren<WallObject>();
-                    wallObj.wallData = wallD.Clone(); //We clone from the original pivot
+                    wallObj.wallData.CopyData(wallD); //We clone from the original pivot
                     wallObj.wallData.wallpaperAssetPath_x_aSide = prevX_wall.wallpaperAssetPath_x_aSide;
                     wallObj.wallData.wallpaperAssetPath_x_bSide = prevX_wall.wallpaperAssetPath_x_bSide;
                     wallObj.cornerXY_wall = true;

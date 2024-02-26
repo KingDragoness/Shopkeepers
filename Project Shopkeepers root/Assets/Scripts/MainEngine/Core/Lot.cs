@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Sirenix.OdinInspector;
+using System.Linq;
 
 public class Lot : MonoBehaviour
 {
@@ -88,7 +89,18 @@ public class Lot : MonoBehaviour
     {
         if (currentLot.floorplanData.Count == 0)
         {
-            currentLot.floorplanData.Add(new BuildData());
+            var floorPlan1 = new BuildData();
+            BuildData.WallData[] pre_walls = ShopkeeperUtilities.CreateWalldataArray(MyLot.lotSize.x, MyLot.lotSize.y);
+            floorPlan1.allWallDatas = pre_walls.ToList();
+            currentLot.floorplanData.Add(floorPlan1);
+        }
+    }
+
+    public static int TotalSquaresInLot
+    {
+        get
+        {
+            return MyLot.lotSize.x * MyLot.lotSize.y;
         }
     }
 }

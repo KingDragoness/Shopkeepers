@@ -122,7 +122,7 @@ namespace ToolBox.Pools
         private Poolable GetInstance()
         {
             int count = _instances.Count;
-
+            //Debug.Log(count);
             if (count != 0)
             {
                 var instance = _instances.Pop();
@@ -148,6 +148,7 @@ namespace ToolBox.Pools
 
                     instance = CreateInstance();
                     instance.gameObject.SetActive(true);
+                    Debug.Log(count);
 
                     return instance;
                 }
