@@ -35,10 +35,17 @@ public class BuildData
         public string wallpaperAssetPath_y_aSide = "";
         public string wallpaperAssetPath_y_bSide = "";
 
+        public void ClearWallpapers()
+        {
+            wallpaperAssetPath_x_aSide = "";
+            wallpaperAssetPath_x_bSide = "";
+            wallpaperAssetPath_y_aSide = "";
+            wallpaperAssetPath_y_bSide = "";
+        }
+
         public void ResetData()
         {
-            pos.x = 0;
-            pos.y = 0;
+    
             this.x_wall = false;
             this.y_wall = false;
             wallpaperAssetPath_x_aSide = "";
@@ -48,9 +55,14 @@ public class BuildData
 
         }
 
-        public void CopyData(WallData toCopy)
+        public void CopyData(WallData toCopy, bool withPosition = false)
         {
-            pos = toCopy.pos;
+            if (withPosition)
+            {
+                pos.x = toCopy.pos.x;
+                pos.y = toCopy.pos.y;
+            }
+
             x_wall = toCopy.x_wall;
             y_wall = toCopy.y_wall;
             wallpaperAssetPath_x_aSide = toCopy.wallpaperAssetPath_x_aSide;

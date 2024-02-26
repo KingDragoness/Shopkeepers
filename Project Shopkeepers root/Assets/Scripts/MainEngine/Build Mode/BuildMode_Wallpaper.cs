@@ -133,6 +133,11 @@ public class BuildMode_Wallpaper : BuildToolScript
         debug_wallpaperTestB.Populate(5);
     }
 
+    private void Start()
+    {
+        previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
+    }
+
 
     public void SetWallpaper(SK_Texture texture)
     {
@@ -201,13 +206,12 @@ public class BuildMode_Wallpaper : BuildToolScript
             if (b == true && Input.GetMouseButton(0) == false)
             {
                 previewHighlightPrefabs.ReleasePoolObject();
-                previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
+                previewWalldatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
                 BuildMode.Wall.ReRenderWallpaperOnly(previewWalldatas);
 
                 b = false;
             }
             previousWallObj = null;
-            if (previewWalldatas.Count > 0) previewWalldatas.Clear();
             debug_wallpaperTestA.gameObject.SetActive(false);
             debug_wallpaperTestB.gameObject.SetActive(false);
         }
@@ -241,7 +245,7 @@ public class BuildMode_Wallpaper : BuildToolScript
         }
 
         previewHighlightPrefabs.ReleasePoolObject();
-        previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
+        previewWalldatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
         previousWallObj = originWallpaper;
         _wallselections.Clear();
 
@@ -362,7 +366,7 @@ public class BuildMode_Wallpaper : BuildToolScript
             return;
         }
 
-        previewWalldatas = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas.Clone();
+        previewWalldatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
 
         previousWallObj = wallObject;
 
@@ -488,18 +492,28 @@ public class BuildMode_Wallpaper : BuildToolScript
         var skTexture_y_a = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_y_aSide);
         var skTexture_y_b = Shopkeeper.Database.Get_SKTexture(wallObject.wallData.wallpaperAssetPath_y_bSide);
 
-        if (wallObject.cornerXY_wall == true && allWallDots != null)
-        {
-            var prevX_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevOffset(new Vector2Int(-1,1)));
-
-            if (prevX_wall != null)
-            {
-                skTexture_x_a = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_aSide);
-                skTexture_x_b = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_bSide);
-            }
-        }
-
         var cornerType = BuildMode.Wall.IsExtraWall_a_Corner(wallObject, allWallDots);
+
+        //DONT CHANGE. SPECIAL QUIRK
+        if (wallObject.cornerXY_wall && allWallDots != null)
+        {
+            cornerType = BuildMode_Wall.WallCornerType.xy;
+
+            if (cornerType == BuildMode_Wall.WallCornerType.xy)
+            {
+                var prevX_wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevOffset(new Vector2Int(-1, 1)));
+
+                if (prevX_wall != null)
+                {
+                    skTexture_x_a = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_aSide);
+                    skTexture_x_b = Shopkeeper.Database.Get_SKTexture(prevX_wall.wallpaperAssetPath_x_bSide);
+                }
+            }
+
+            wallObject.cornerType = cornerType;
+            wallObject.up = true;
+            wallObject.left = true;
+        }
 
         if (cornerType != BuildMode_Wall.WallCornerType.none && wallObject.cornerXY_wall == false)
         {
@@ -526,6 +540,8 @@ public class BuildMode_Wallpaper : BuildToolScript
                     skTexture_y_b = Shopkeeper.Database.Get_SKTexture(prevY_wall.wallpaperAssetPath_y_bSide);
                 }
             }
+
+       
         }
 
 

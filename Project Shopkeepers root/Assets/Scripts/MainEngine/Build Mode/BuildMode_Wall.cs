@@ -23,6 +23,7 @@ public class BuildMode_Wall : BuildToolScript
 
     private Vector3Int startingWallPoint = new Vector3Int();
     [SerializeField] [ReadOnly] private BuildData previewFloorPlan = new BuildData();
+    [SerializeField] [ReadOnly] private BuildData previewFloorPlan_beforeInvalid = new BuildData();
     [SerializeField] [ReadOnly] private int distance = 1;
     [SerializeField] [ReadOnly] private bool isInvalidDraw = false;
     [SerializeField] [ReadOnly] private bool isDeleteMode = false;
@@ -43,6 +44,7 @@ public class BuildMode_Wall : BuildToolScript
     private void Start()
     {
         previewFloorPlan = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].Clone();
+        previewFloorPlan_beforeInvalid = Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].Clone();
     }
 
     private Vector3Int prevPositionArrow = new Vector3Int();
@@ -61,21 +63,21 @@ public class BuildMode_Wall : BuildToolScript
             //set initial
             startingWallPoint = Shopkeeper.BuildMode.Arrow.GetArrowPosition();
             newDots = new Vector2Int[0];
-            previewFloorPlan.allWallDatas.ResetWallDatas();
             previewFloorPlan.allWallDatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
+            previewFloorPlan_beforeInvalid.allWallDatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
+
         }
 
-        if (Input.GetMouseButtonUp(0))
+        else if (Input.GetMouseButtonUp(0))
         {
             if (newDots.Length > 0)
             {
                 DrawNewDots(newDots, isDeleteMode, BuildMode.CurrentFloorPlan.allWallDatas);
-                Debug.Log("Draw walls into the lot");
             }
 
             newDots = new Vector2Int[0];
         }
-        if (Input.GetMouseButton(0))
+        else if(Input.GetMouseButton(0))
         {
             Vector3 currentArrowPos = Shopkeeper.BuildMode.Arrow.GetArrowPosition();
             distance = Mathf.RoundToInt((currentArrowPos - startingWallPoint).magnitude);
@@ -102,18 +104,19 @@ public class BuildMode_Wall : BuildToolScript
 
             if (isInvalidDraw)
             {
+                previewFloorPlan.allWallDatas.SetWallDatas(previewFloorPlan_beforeInvalid.allWallDatas);
                 newDots = new Vector2Int[0];
             }
 
 
             if (prevPositionArrow != Shopkeeper.BuildMode.Arrow.GetArrowPosition())
             {
-                previewFloorPlan.allWallDatas.ResetWallDatas();
-                previewFloorPlan.allWallDatas.SetWallDatas(Lot.MyLot.floorplanData[Shopkeeper.Game.currentLevel].allWallDatas);
+                previewFloorPlan.allWallDatas.SetWallDatas(previewFloorPlan_beforeInvalid.allWallDatas);
                 DrawNewDots(newDots, isDeleteMode);
-            
             }
-                //paint dots on the map
+
+
+            //paint dots on the map
             Shopkeeper.BuildMode.Arrow.SetArrowColorUsed();
             prevPositionArrow = Shopkeeper.BuildMode.Arrow.GetArrowPosition();
 
@@ -155,18 +158,18 @@ public class BuildMode_Wall : BuildToolScript
             {
                 if (pos.x == highestPos.x && pos.y == highestPos.y) continue;
 
-                newWallDat.ResetData();
                 BuildData.WallData similarWall = previewFloorPlan.allWallDatas.Find(x => x.pos.x == pos.x && x.pos.y == pos.y); //always exists
 
                 if (is_X) similarWall.x_wall = true;
                 if (is_Y) similarWall.y_wall = true;
-                if (is_X && isDeleteMode) similarWall.x_wall = false;
-                if (is_Y && isDeleteMode) similarWall.y_wall = false;
+                if (is_X && isDeleteMode) { similarWall.x_wall = false; similarWall.wallpaperAssetPath_x_aSide = ""; similarWall.wallpaperAssetPath_x_bSide = ""; }
+                if (is_Y && isDeleteMode) { similarWall.y_wall = false; similarWall.wallpaperAssetPath_y_aSide = ""; similarWall.wallpaperAssetPath_y_bSide = ""; }
 
                 allModifiedWalls.Add(similarWall);
-
             }
+
         }
+       
 
         if (toOverride != null)
         {
@@ -204,7 +207,8 @@ public class BuildMode_Wall : BuildToolScript
             if (wallobj == null) continue;
 
             var new_WallDat = allWallDots.IsWallDataExistAt(wallobj.wallData.pos);
-            wallobj.wallData = new_WallDat;
+            if (new_WallDat == null) continue;
+            wallobj.wallData.CopyData(new_WallDat);
             BuildMode.Wallpaper.PaintWall(wallobj);
         }
 
@@ -215,7 +219,7 @@ public class BuildMode_Wall : BuildToolScript
             var new_WallDat = allWallDots.IsWallDataExistAt(wallobj.wallData.pos);
 
             if (new_WallDat == null) continue;
-            wallobj.wallData = new_WallDat;
+            wallobj.wallData.CopyData(new_WallDat);
             BuildMode.Wallpaper.PaintExtraWall(wallobj, allWallDots);
         }
     }
@@ -238,7 +242,7 @@ public class BuildMode_Wall : BuildToolScript
 
         if (DEBUG_Allow_GenerateDebugs)
         {
-            /*
+
             foreach (var wallDot in z_listDots)
             {
                 Vector3 pos = new Vector3(wallDot.pos.x, 0f, wallDot.pos.y);
@@ -276,21 +280,21 @@ public class BuildMode_Wall : BuildToolScript
                     alreadyDrawnLines.Add(positions[1]);
                 }
             }
-        */
+
         }
 
         foreach (var wallDot in z_listDots)
         {
             if (!wallDot.x_wall && !wallDot.y_wall) continue;
 
-            if (allModifiedWalls.Find(x => x.pos.x == wallDot.pos.x) != null)
-            {
-                var similarData = previewFloorPlan.allWallDatas.Find(x => x.pos.x == wallDot.pos.x && x.pos.y == wallDot.pos.y);
-                if (wallDot.IsSimilarWith(similarData))
-                {
-                    //continue;
-                }
-            }
+            //if (allModifiedWalls.Find(x => x.pos.x == wallDot.pos.x) != null)
+            //{
+            //    var similarData = previewFloorPlan.allWallDatas.Find(x => x.pos.x == wallDot.pos.x && x.pos.y == wallDot.pos.y);
+            //    if (wallDot.IsSimilarWith(similarData))
+            //    {
+            //        //continue;
+            //    }
+            //}
 
             for (int z1 = 0; z1 < 2; z1++)
             {
@@ -310,7 +314,15 @@ public class BuildMode_Wall : BuildToolScript
                 Vector3 _position = new Vector3(wallDot.pos.x, 0, wallDot.pos.y);
                 Vector3 _rotation = Vector3.zero;
                 wall.gameObject.SetActive(true);
-                wallObj.wallData = wallDot;
+                {
+                    if (wallObj.wallData == null) wallObj.wallData = new BuildData.WallData();
+                    wallObj.wallData.CopyData(wallDot, true); //BAD COPYING DATA
+
+                    if (wallObj.wallData.pos != wallDot.pos)
+                    {
+                        Debug.Log($"bad copying: {wallObj.wallData.pos} {wallDot.pos}");
+                    }
+                }
 
                 if (z1 == 0 && wallDot.x_wall)
                 {
@@ -372,7 +384,11 @@ public class BuildMode_Wall : BuildToolScript
                 var extraWall = prefab_Wall_ExtraL.Reuse(Shopkeeper.Scene); //Instantiate(prefab_Wall_ExtraL, Shopkeeper.Scene);
                 extraWall.gameObject.SetActive(true);
                 WallObject wallObj = extraWall.GetComponentInChildren<WallObject>();
-                wallObj.wallData = wallDot;
+                {
+                    wallObj.ResetYouFcukingRetard();
+                    if (wallObj.wallData == null) wallObj.wallData = new BuildData.WallData();
+                    wallObj.wallData.CopyData(wallDot, true);
+                }
                 BuildMode.Wallpaper.PaintExtraWall(wallObj, allWallDots);
 
                 Vector3 _position = new Vector3(wallDot.pos.x, 0, wallDot.pos.y);
@@ -382,9 +398,10 @@ public class BuildMode_Wall : BuildToolScript
             }
         }
 
+
         foreach (var wallD in allWallDots)
         {
-            BuildData.WallData cornerUpWall = allWallDots.Find(x => x.pos == wallD.NextY()); //(wallD.NextY(), false, false); //generating pseudo wall data and it only needs one to check
+            BuildData.WallData cornerUpWall = allWallDots.Find(x => x.pos == wallD.NextY());
 
             //we are pivot from the cornerupwall
             if (cornerUpWall != null)
@@ -408,7 +425,8 @@ public class BuildMode_Wall : BuildToolScript
                     var extraWall = prefab_Wall_ExtraL.Reuse(Shopkeeper.Scene); //Instantiate(prefab_Wall_ExtraL, Shopkeeper.Scene);
                     extraWall.gameObject.SetActive(true);
                     WallObject wallObj = extraWall.GetComponentInChildren<WallObject>();
-                    wallObj.wallData.CopyData(wallD); //We clone from the original pivot
+                    wallObj.ResetYouFcukingRetard();
+                    wallObj.wallData.CopyData(wallD, true); //We clone from the original pivot
                     wallObj.wallData.wallpaperAssetPath_x_aSide = prevX_wall.wallpaperAssetPath_x_aSide;
                     wallObj.wallData.wallpaperAssetPath_x_bSide = prevX_wall.wallpaperAssetPath_x_bSide;
                     wallObj.cornerXY_wall = true;
@@ -448,10 +466,48 @@ public class BuildMode_Wall : BuildToolScript
         var prevX_Wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevX());
         var prevY_Wall = allWallDots.IsWallDataExistAt(wallObject.wallData.PrevY());
 
-        if (wallObject.wallData.x_wall == true) { right = true;  connections++; } 
-        if (wallObject.wallData.y_wall == true) { up = true;  connections++; }
-        if (prevX_Wall != null) { if (prevX_Wall.x_wall) { left = true; connections++; } }
-        if (prevY_Wall != null) { if (prevY_Wall.y_wall) { down = true; connections++; } }
+
+        if (wallObject.wallData.x_wall == true) 
+        { 
+            right = true;  
+            connections++;
+        } 
+
+        if (wallObject.wallData.y_wall == true) 
+        { 
+            up = true;  
+            connections++; 
+        }
+
+        wallObject.reportTest = $"{wallObject.wallData.pos}";
+
+        if (prevX_Wall != null) 
+        {
+            wallObject.reportTest += $"{prevX_Wall.pos} | x wall: {prevX_Wall.x_wall}";
+            if (prevX_Wall.x_wall == true) 
+            { 
+                left = true; 
+                connections++;
+                //Debug.Log($"{left} =  {prevX_Wall.pos} | x wall: {prevX_Wall.x_wall}");
+            }
+
+            //Debug.Log($"test1 {wallObject.wallData.pos}");
+        }
+        if (prevY_Wall != null) 
+        { 
+            if (prevY_Wall.y_wall == true) 
+            { 
+                down = true; 
+                connections++; 
+            }
+            wallObject.reportTest = $"{wallObject.wallData.pos} | Prev y wall: {prevY_Wall.pos}";
+        }
+
+        wallObject.connections = connections;
+        wallObject.left = left;
+        wallObject.right = right;
+        wallObject.up = up;
+        wallObject.down = down;
 
         if (connections == 2)
         {
@@ -462,6 +518,7 @@ public class BuildMode_Wall : BuildToolScript
 
         }
 
+     
         return WallCornerType.none;
     }
 
