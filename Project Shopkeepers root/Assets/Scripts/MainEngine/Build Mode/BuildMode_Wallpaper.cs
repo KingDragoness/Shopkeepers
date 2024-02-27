@@ -176,13 +176,20 @@ public class BuildMode_Wallpaper : BuildToolScript
                         }
                         else
                         {
-                            HoveringWallpaper(wallObject, BuildMode.CurrentFloorPlan.allWallDatas);
+
                         }
                     }
 
                     if (Input.GetMouseButton(0))
                     {
-         
+                        if (Input.GetKey(KeyCode.LeftShift))
+                        {
+
+                        }
+                        else
+                        {
+                            HoveringWallpaper(wallObject, BuildMode.CurrentFloorPlan.allWallDatas);
+                        }
                     }
                     else
                     {
